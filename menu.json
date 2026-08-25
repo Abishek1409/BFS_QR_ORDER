@@ -1,0 +1,44 @@
+{
+  "categories": [
+    {
+      "name": "Fresh Juices",
+      "items": [
+        { "id": "j1", "name": "Orange Juice", "price": 80 },
+        { "id": "j2", "name": "Apple Juice", "price": 90 },
+        { "id": "j3", "name": "Mango Juice", "price": 100 },
+        { "id": "j4", "name": "Watermelon Juice", "price": 70 },
+        { "id": "j5", "name": "Pineapple Juice", "price": 85 },
+        { "id": "j6", "name": "Mixed Fruit Juice", "price": 120 }
+      ]
+    },
+    {
+      "name": "Milkshakes",
+      "items": [
+        { "id": "m1", "name": "Vanilla Milkshake", "price": 110 },
+        { "id": "m2", "name": "Chocolate Milkshake", "price": 120 },
+        { "id": "m3", "name": "Strawberry Milkshake", "price": 120 },
+        { "id": "m4", "name": "Mango Milkshake", "price": 130 }
+      ]
+    },
+    {
+      "name": "Snacks",
+      "items": [
+        { "id": "s1", "name": "Veg Sandwich", "price": 60 },
+        { "id": "s2", "name": "Cheese Sandwich", "price": 80 },
+        { "id": "s3", "name": "French Fries", "price": 70 },
+        { "id": "s4", "name": "Onion Pakora", "price": 50 },
+        { "id": "s5", "name": "Paneer Tikka", "price": 100 },
+        { "id": "s6", "name": "Spring Roll", "price": 80 }
+      ]
+    },
+    {
+      "name": "Beverages",
+      "items": [
+        { "id": "b1", "name": "Filter Coffee", "price": 40 },
+        { "id": "b2", "name": "Cold Coffee", "price": 90 },
+        { "id": "b3", "name": "Masala Chai", "price": 30 },
+        { "id": "b4", "name": "Green Tea", "price": 50 }
+      ]
+    }
+  ]
+}

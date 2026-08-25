@@ -1,0 +1,19 @@
+node_modules/
+
+.env
+.env.*
+!.env.example
+
+# Firebase and Google Cloud credentials
+firebase-adminsdk-*.json
+service-account*.json
+*-service-account.json
+
+# Local client configuration overrides
+firebase-config.local.js
+public/firebase-config.local.js
+
+# Local TLS certificates and generated order data
+cert.pem
+key.pem
+orders.json
