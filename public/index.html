@@ -51,8 +51,19 @@
     position: relative;
   }
 
+  #gridScanBackground {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.9;
+  }
+
   .hero {
     position: relative;
+    z-index: 1;
     min-height: 430px;
     overflow: hidden;
     border-bottom: 1px solid var(--color-border);
@@ -137,6 +148,8 @@
   }
 
   .app-layout {
+    position: relative;
+    z-index: 1;
     display: grid;
     grid-template-columns: minmax(0, 1fr) 360px;
     gap: 24px;
@@ -947,6 +960,8 @@
 </head>
 <body>
 
+<canvas id="gridScanBackground" aria-hidden="true"></canvas>
+
 <header class="page-header">
   <div class="brand">
     <span class="brand-emoji">🍊</span>
@@ -1230,66 +1245,103 @@
     }
 
     function draw(time) {
-      const gridScale = 0.1;
-      const cellSize = Math.max(18, Math.min(width, height) * gridScale);
-      const scanPosition = reduceMotion ? height * 0.46 : (time * 0.12) % (height + 180) - 90;
-
       context.clearRect(0, 0, width, height);
       context.fillStyle = '#05080A';
       context.fillRect(0, 0, width, height);
+      const centerX = width * 0.56;
+      const centerY = height * 0.5;
+      const shapeWidth = Math.min(width * 0.82, 470);
+      const shapeHeight = Math.min(height * 1.2, 390);
+      const rotation = reduceMotion ? 0 : time * 0.00022;
+      const dotSize = Math.max(1.1, Math.min(width, height) * 0.004);
+      const spacing = dotSize * 4.1;
 
       context.save();
-      context.lineWidth = 1;
-      context.strokeStyle = '#2F293A';
-      context.globalAlpha = 0.88;
-      for (let x = 0; x <= width; x += cellSize) {
-        context.beginPath();
-        context.moveTo(x, 0);
-        context.lineTo(x, height);
-        context.stroke();
-      }
-      for (let y = 0; y <= height; y += cellSize) {
-        context.beginPath();
-        context.moveTo(0, y);
-        context.lineTo(width, y);
-        context.stroke();
-      }
-      context.restore();
-
-      const scanGradient = context.createLinearGradient(0, scanPosition - 90, 0, scanPosition + 90);
-      scanGradient.addColorStop(0, 'rgba(255, 159, 252, 0)');
-      scanGradient.addColorStop(0.45, 'rgba(255, 159, 252, 0.14)');
-      scanGradient.addColorStop(0.5, 'rgba(255, 159, 252, 0.4)');
-      scanGradient.addColorStop(0.55, 'rgba(255, 159, 252, 0.14)');
-      scanGradient.addColorStop(1, 'rgba(255, 159, 252, 0)');
-      context.fillStyle = scanGradient;
-      context.fillRect(0, scanPosition - 90, width, 180);
-
-      context.save();
-      context.lineWidth = 1;
-      context.strokeStyle = '#FF9FFC';
-      context.shadowColor = '#FF9FFC';
-      context.shadowBlur = 12;
-      context.globalAlpha = 0.86;
       context.beginPath();
-      context.moveTo(0, scanPosition);
-      context.lineTo(width, scanPosition);
-      context.stroke();
-      context.restore();
-
-      context.save();
-      context.fillStyle = 'rgba(255, 159, 252, 0.56)';
-      const jitter = reduceMotion ? 0 : Math.sin(time * 0.004) * 0.1;
-      for (let y = 0; y < height; y += cellSize) {
-        for (let x = 0; x < width; x += cellSize) {
-          const distance = Math.abs(y - scanPosition);
-          if (distance > cellSize * 1.8) continue;
-          context.globalAlpha = Math.max(0, 0.5 - distance / (cellSize * 4));
-          context.fillRect(x + jitter, y + jitter, 1, 1);
+      context.ellipse(centerX, centerY, shapeWidth * 0.5, shapeHeight * 0.5, 0, 0, Math.PI * 2);
+      context.clip();
+      for (let y = -spacing; y < height + spacing; y += spacing) {
+        for (let x = -spacing; x < width + spacing; x += spacing) {
+          const localX = x - centerX;
+          const localY = y - centerY;
+          const distance = Math.hypot(localX, localY);
+          const angle = Math.atan2(localY, localX);
+          const spiral = angle + distance * 0.012 - rotation;
+          const band = Math.sin(spiral * 3.1 + distance * 0.025);
+          const glow = Math.max(0, Math.min(1, (band + 0.25) * 0.85));
+          const edgeFade = Math.max(0, 1 - Math.max(0, distance - shapeWidth * 0.28) / (shapeWidth * 0.25));
+          const opacity = glow * edgeFade;
+          if (opacity < 0.08) continue;
+          context.fillStyle = `rgba(0, 190, 255, ${0.35 + opacity * 0.65})`;
+          context.beginPath();
+          context.arc(x, y, dotSize * (0.65 + opacity * 0.5), 0, Math.PI * 2);
+          context.fill();
         }
       }
       context.restore();
 
+      context.save();
+      context.strokeStyle = '#16A34A';
+      context.lineWidth = 5;
+      context.lineCap = 'round';
+      context.beginPath();
+      context.moveTo(centerX - shapeWidth * 0.34, centerY - shapeHeight * 0.32);
+      context.lineTo(centerX - shapeWidth * 0.22, centerY - shapeHeight * 0.22);
+      context.stroke();
+      context.restore();
+
+      if (!reduceMotion) window.requestAnimationFrame(draw);
+    }
+
+    resize();
+    window.addEventListener('resize', resize);
+    draw(0);
+  }
+
+  function initGridScanBackground() {
+    const canvas = document.getElementById('gridScanBackground');
+    if (!canvas) return;
+    const context = canvas.getContext('2d');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let width = 0;
+    let height = 0;
+
+    function resize() {
+      const scale = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      context.setTransform(scale, 0, 0, scale, 0, 0);
+    }
+
+    function draw(time) {
+      const cellSize = Math.max(22, Math.min(width, height) * 0.1);
+      const scanPosition = reduceMotion ? height * 0.45 : (time * 0.12) % (height + 180) - 90;
+      context.clearRect(0, 0, width, height);
+      context.fillStyle = '#05080A';
+      context.fillRect(0, 0, width, height);
+      context.lineWidth = 1;
+      context.strokeStyle = '#2F293A';
+      context.globalAlpha = 0.88;
+      for (let x = 0; x <= width; x += cellSize) {
+        context.beginPath(); context.moveTo(x, 0); context.lineTo(x, height); context.stroke();
+      }
+      for (let y = 0; y <= height; y += cellSize) {
+        context.beginPath(); context.moveTo(0, y); context.lineTo(width, y); context.stroke();
+      }
+      context.globalAlpha = 1;
+      const scanGradient = context.createLinearGradient(0, scanPosition - 100, 0, scanPosition + 100);
+      scanGradient.addColorStop(0, 'rgba(255, 159, 252, 0)');
+      scanGradient.addColorStop(0.5, 'rgba(255, 159, 252, 0.22)');
+      scanGradient.addColorStop(1, 'rgba(255, 159, 252, 0)');
+      context.fillStyle = scanGradient;
+      context.fillRect(0, scanPosition - 100, width, 200);
+      context.strokeStyle = '#FF9FFC';
+      context.shadowColor = '#FF9FFC';
+      context.shadowBlur = 12;
+      context.beginPath(); context.moveTo(0, scanPosition); context.lineTo(width, scanPosition); context.stroke();
+      context.shadowBlur = 0;
       if (!reduceMotion) window.requestAnimationFrame(draw);
     }
 
@@ -1607,6 +1659,7 @@
   renderCartSheet();
   buildMenu();
   initHeroDither();
+  initGridScanBackground();
 })();
 </script>
 </body>
