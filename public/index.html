@@ -209,6 +209,59 @@
 
   .category-tabs::-webkit-scrollbar { display: none; }
 
+  .search-wrap {
+    position: relative;
+    margin-bottom: 12px;
+  }
+
+  .search-input {
+    width: 100%;
+    padding: 12px 42px;
+    border: 1px solid var(--color-border);
+    border-radius: 50px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    font: inherit;
+    outline: none;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .search-input:focus { border-color: var(--color-primary); }
+
+  .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--color-text-secondary);
+    pointer-events: none;
+  }
+
+  .search-clear {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 26px;
+    height: 26px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--color-border);
+    color: var(--color-text-secondary);
+    font-size: 20px;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .search-results-title {
+    margin: 20px 0 11px 4px;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+  }
+
   .tab-pill {
     flex-shrink: 0;
     padding: 9px 16px;
@@ -247,6 +300,37 @@
   }
 
   @keyframes spin { to { transform: rotate(360deg); } }
+
+  .cart-bar.bump { animation: cartBump 0.3s ease; }
+
+  @keyframes cartBump {
+    0%, 100% { transform: translateX(-50%) scale(1); }
+    45% { transform: translateX(-50%) scale(1.05); }
+  }
+
+  .toast {
+    position: fixed;
+    top: 84px;
+    left: 50%;
+    z-index: 150;
+    padding: 11px 18px;
+    border: 1px solid var(--color-border);
+    border-radius: 50px;
+    background: var(--color-surface);
+    color: var(--color-text);
+    box-shadow: var(--shadow-md);
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, -10px);
+  }
+
+  .toast.visible { animation: toastInOut 1.8s ease forwards; }
+
+  @keyframes toastInOut {
+    0% { opacity: 0; transform: translate(-50%, -10px); }
+    12%, 82% { opacity: 1; transform: translate(-50%, 0); }
+    100% { opacity: 0; transform: translate(-50%, -10px); }
+  }
 
   /* Sticky cart bar */
   .cart-bar {
@@ -670,15 +754,39 @@
   }
 
   .confirm-emoji {
-    font-size: 64px;
+    width: 76px;
+    height: 76px;
     margin-bottom: 16px;
-    animation: bounce 0.6s ease;
   }
 
-  @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    40% { transform: translateY(-16px); }
-    60% { transform: translateY(-8px); }
+  .confirm-check {
+    width: 76px;
+    height: 76px;
+    overflow: visible;
+  }
+
+  .confirm-check circle,
+  .confirm-check path {
+    fill: none;
+    stroke: var(--color-success);
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+
+  .confirm-check circle {
+    stroke-dasharray: 213;
+    stroke-dashoffset: 213;
+    animation: drawCheck 0.5s ease forwards;
+  }
+
+  .confirm-check path {
+    stroke-dasharray: 70;
+    stroke-dashoffset: 70;
+    animation: drawCheck 0.35s ease 0.45s forwards;
+  }
+
+  @keyframes drawCheck {
+    to { stroke-dashoffset: 0; }
   }
 
   .confirm-title {
@@ -749,6 +857,11 @@
 
 <main class="app-layout">
   <div class="container">
+    <div class="search-wrap">
+      <span class="search-icon" aria-hidden="true">⌕</span>
+      <input class="search-input" id="searchInput" type="search" placeholder="Search menu" autocomplete="off">
+      <button class="search-clear hidden" id="searchClear" type="button" aria-label="Clear search">&times;</button>
+    </div>
     <div class="category-tabs" id="categoryTabs"></div>
     <div id="menuContainer">
       <div class="empty-state">
@@ -789,6 +902,7 @@
 </div>
 
 <div class="overlay" id="overlay"></div>
+<div class="toast" id="toast" role="status"></div>
 
 <!-- Item detail sheet -->
 <div class="sheet" id="itemSheet">
@@ -847,7 +961,12 @@
 
 <!-- Confirmation screen -->
 <div class="confirm-screen hidden" id="confirmScreen">
-  <div class="confirm-emoji">✅</div>
+  <div class="confirm-emoji" aria-hidden="true">
+    <svg class="confirm-check" viewBox="0 0 76 76">
+      <circle cx="38" cy="38" r="34" stroke-width="4"></circle>
+      <path d="M21 39.5 32.5 51 56 27.5" stroke-width="4"></path>
+    </svg>
+  </div>
   <div class="confirm-title">Order placed!</div>
   <div class="confirm-body" id="confirmBody">Table — your order is with the kitchen.<br>You can close this tab now.</div>
   <button class="btn btn-primary confirm-action" id="orderMore">Order More</button>
@@ -877,6 +996,8 @@
   const tableBadge = document.getElementById('tableBadge');
   const menuContainer = document.getElementById('menuContainer');
   const categoryTabs = document.getElementById('categoryTabs');
+  const searchInput = document.getElementById('searchInput');
+  const searchClear = document.getElementById('searchClear');
   let activeCategory = 'All';
   const cartBar = document.getElementById('cartBar');
   const cartCount = document.getElementById('cartCount');
@@ -887,6 +1008,8 @@
   const confirmScreen = document.getElementById('confirmScreen');
   const confirmBody = document.getElementById('confirmBody');
   const orderMore = document.getElementById('orderMore');
+  const addToCart = document.getElementById('addToCart');
+  const toast = document.getElementById('toast');
 
   let menu = {
     categories: [
@@ -938,6 +1061,7 @@
   let qty = 1;
   let note = '';
   let isJuiceCategory = false;
+  let searchQuery = '';
 
   tableBadge.textContent = table ? 'Table ' + table : 'Table —';
 
@@ -987,11 +1111,42 @@
     });
   }
 
+  function renderItemCard(item, cat, grid) {
+    const card = document.createElement('div');
+    card.className = 'item-card';
+    card.innerHTML = `
+      <span class="item-badge ${badgeClassFor(cat.name)}">${escapeHtml(cat.name)}</span>
+      <div class="item-emoji">${emojiFor(cat, item)}</div>
+      <div class="item-name">${escapeHtml(item.name)}</div>
+      <div class="item-price">${formatPrice(item.price)}</div>
+    `;
+    card.addEventListener('click', () => openItemSheet(item, cat));
+    grid.appendChild(card);
+  }
+
   function buildMenu() {
     buildTabs();
     menuContainer.innerHTML = '';
     if (!menu.categories.length) {
       menuContainer.innerHTML = '<div class="empty-state">No menu items available.</div>';
+      return;
+    }
+    if (searchQuery) {
+      const matches = menu.categories.flatMap(cat => cat.items
+        .filter(item => item.name.toLowerCase().includes(searchQuery))
+        .map(item => ({ item: item, cat: cat })));
+      const header = document.createElement('div');
+      header.className = 'search-results-title';
+      header.textContent = matches.length + (matches.length === 1 ? ' result' : ' results');
+      menuContainer.appendChild(header);
+      if (!matches.length) {
+        menuContainer.innerHTML += '<div class="empty-state">No items match &quot;' + escapeHtml(searchQuery) + '&quot;.</div>';
+        return;
+      }
+      const grid = document.createElement('div');
+      grid.className = 'menu-grid';
+      matches.forEach(match => renderItemCard(match.item, match.cat, grid));
+      menuContainer.appendChild(grid);
       return;
     }
     const categoriesToShow = activeCategory === 'All'
@@ -1007,18 +1162,7 @@
       const grid = document.createElement('div');
       grid.className = 'menu-grid';
 
-      cat.items.forEach(item => {
-        const card = document.createElement('div');
-        card.className = 'item-card';
-        card.innerHTML = `
-          <span class="item-badge ${badgeClassFor(cat.name)}">${escapeHtml(cat.name)}</span>
-          <div class="item-emoji">${emojiFor(cat, item)}</div>
-          <div class="item-name">${escapeHtml(item.name)}</div>
-          <div class="item-price">${formatPrice(item.price)}</div>
-        `;
-        card.addEventListener('click', () => openItemSheet(item, cat));
-        grid.appendChild(card);
-      });
+      cat.items.forEach(item => renderItemCard(item, cat, grid));
 
       menuContainer.appendChild(grid);
     });
@@ -1040,6 +1184,7 @@
     document.getElementById('itemSheetTitle').textContent = item.name;
     document.getElementById('noteInput').value = '';
     document.getElementById('qtyValue').textContent = '1';
+    updateAddToCartLabel();
 
     const juiceOptions = document.getElementById('juiceOptions');
     if (isJuiceCategory) {
@@ -1050,6 +1195,12 @@
     }
 
     openSheet(itemSheet);
+  }
+
+  function updateAddToCartLabel() {
+    if (!currentItem) return;
+    const unitPrice = currentItem.price + (isJuiceCategory && selections.size === 'Large' ? 10 : 0);
+    addToCart.textContent = 'Add to Cart · ' + formatPrice(unitPrice * qty);
   }
 
   function closeSheet(sheet) {
@@ -1075,6 +1226,7 @@
       document.querySelectorAll(`#juiceOptions .pill[data-type="${type}"]`).forEach(p => p.classList.remove('selected'));
       pill.classList.add('selected');
       selections[type] = pill.dataset.value;
+      updateAddToCartLabel();
     });
   });
 
@@ -1082,17 +1234,19 @@
     if (qty > 1) {
       qty--;
       document.getElementById('qtyValue').textContent = qty;
+      updateAddToCartLabel();
     }
   });
 
   document.getElementById('qtyPlus').addEventListener('click', () => {
     qty++;
     document.getElementById('qtyValue').textContent = qty;
+    updateAddToCartLabel();
   });
 
   document.getElementById('cancelItem').addEventListener('click', () => closeSheet(itemSheet));
 
-  document.getElementById('addToCart').addEventListener('click', () => {
+  addToCart.addEventListener('click', () => {
     if (!currentItem) return;
 
     let unitPrice = currentItem.price;
@@ -1124,7 +1278,38 @@
 
     cart.push(line);
     updateCartBar();
+    showToast(qty + ' × ' + currentItem.name + ' added');
+    cartBar.classList.remove('bump');
+    void cartBar.offsetWidth;
+    cartBar.classList.add('bump');
     closeSheet(itemSheet);
+  });
+
+  function showToast(message) {
+    toast.textContent = '✓  ' + message;
+    toast.classList.remove('visible');
+    void toast.offsetWidth;
+    toast.classList.add('visible');
+  }
+
+  function replayConfirmationCheck() {
+    const check = document.querySelector('.confirm-check');
+    const freshCheck = check.cloneNode(true);
+    check.replaceWith(freshCheck);
+  }
+
+  searchInput.addEventListener('input', () => {
+    searchQuery = searchInput.value.trim().toLowerCase();
+    searchClear.classList.toggle('hidden', !searchQuery);
+    buildMenu();
+  });
+
+  searchClear.addEventListener('click', () => {
+    searchInput.value = '';
+    searchQuery = '';
+    searchClear.classList.add('hidden');
+    searchInput.focus();
+    buildMenu();
   });
 
   function updateCartBar() {
@@ -1202,6 +1387,7 @@
       cart = [];
 
       confirmBody.innerHTML = `Table <strong>${escapeHtml(table)}</strong> — your order is with the kitchen.<br>You can close this tab now.`;
+      replayConfirmationCheck();
       confirmScreen.classList.remove('hidden');
     } catch (err) {
       alert('Could not place order. Please check your WiFi and try again.');
