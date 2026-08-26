@@ -21,7 +21,6 @@
     --color-border: #2F293A;
     --color-ice: #00BEFF;
     --color-sugar: #F5C15D;
-    --color-size: #C5A1FF;
     --color-juice: #16A34A;
     --color-shake: #FF9FFC;
     --color-snack: #FF9A62;
@@ -655,7 +654,6 @@
 
   .pill.ice.selected { border-color: var(--color-ice); background: rgba(0, 190, 255, 0.15); color: #7DDBFF; }
   .pill.sugar.selected { border-color: var(--color-sugar); background: rgba(245, 193, 93, 0.15); color: #FFD77D; }
-  .pill.size.selected { border-color: var(--color-size); background: rgba(197, 161, 255, 0.15); color: #D8C3FF; }
 
   /* Quantity stepper */
   .qty-stepper {
@@ -1059,13 +1057,6 @@
       </div>
     </div>
 
-    <div class="option-group" id="sizeGroup">
-      <div class="option-label">Size</div>
-      <div class="option-pills">
-        <button class="pill size" data-type="size" data-value="Regular">Regular</button>
-        <button class="pill size" data-type="size" data-value="Large">Large (+₹10)</button>
-      </div>
-    </div>
   </div>
 
   <div class="option-group">
@@ -1186,7 +1177,7 @@
   };
   let cart = [];
   let currentItem = null;
-  let selections = { ice: '', sugar: '', size: 'Regular' };
+  let selections = { ice: '', sugar: '' };
   let qty = 1;
   let note = '';
   let isJuiceCategory = false;
@@ -1300,84 +1291,127 @@
   function initGridScanBackground() {
     const canvas = document.getElementById('gridScanBackground');
     if (!canvas) return;
-    const context = canvas.getContext('2d');
+    const context = canvas.getContext('webgl', { alpha: false, antialias: true });
+    if (!context) return;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let width = 0;
-    let height = 0;
+    const vertexSource = 'attribute vec2 position; void main() { gl_Position = vec4(position, 0.0, 1.0); }';
+    const fragmentSource = `
+      precision highp float;
+      #extension GL_OES_standard_derivatives : enable
+      uniform vec2 resolution;
+      uniform float time;
+      uniform vec2 pointer;
+      const vec3 gridColor = vec3(0.184, 0.161, 0.227);
+      const vec3 scanColor = vec3(1.0, 0.624, 0.988);
+
+      float gridLine(vec2 uv) {
+        vec2 distanceToLine = abs(fract(uv) - 0.5);
+        vec2 width = fwidth(uv) * 1.25;
+        return max(1.0 - smoothstep(0.0, width.x, distanceToLine.x),
+                   1.0 - smoothstep(0.0, width.y, distanceToLine.y));
+      }
+
+      void main() {
+        vec2 p = (2.0 * gl_FragCoord.xy - resolution) / resolution.y;
+        vec2 look = pointer * 0.12;
+        vec3 rayOrigin = vec3(look.x, look.y, 0.0);
+        vec3 rayDirection = normalize(vec3(p.x - look.x, p.y - look.y, 1.8));
+        float nearest = 1e6;
+        vec3 hit = vec3(0.0);
+        float surface = 0.0;
+
+        for (int i = 0; i < 4; i++) {
+          float isVertical = float(i < 2);
+          float plane = (i == 0) ? -0.62 : (i == 1) ? 0.62 : (i == 2) ? -0.38 : 0.38;
+          float originAxis = isVertical > 0.5 ? rayOrigin.x : rayOrigin.y;
+          float directionAxis = isVertical > 0.5 ? rayDirection.x : rayDirection.y;
+          float travel = (plane - originAxis) / directionAxis;
+          vec3 candidate = rayOrigin + rayDirection * travel;
+          if (travel > 0.0 && candidate.z < nearest && candidate.z > 0.03) {
+            nearest = candidate.z;
+            hit = candidate;
+            surface = isVertical;
+          }
+        }
+
+        float depth = max(0.05, hit.z);
+        vec2 gridUv = surface > 0.5 ? hit.yz : hit.xz;
+        gridUv /= 0.1;
+        gridUv += vec2(sin(gridUv.y * 2.7 + time * 1.8), cos(gridUv.x * 2.3 - time * 1.6)) * 0.015;
+        float lines = gridLine(gridUv);
+        float fade = exp(-depth * 1.65);
+
+        float cycle = 4.0;
+        float phase = mod(time, cycle) / cycle;
+        phase = phase < 0.5 ? phase * 2.0 : 2.0 - phase * 2.0;
+        float scanDepth = phase * 2.2;
+        float scanBand = exp(-pow(abs(depth - scanDepth) / 0.12, 2.0));
+        float aura = exp(-pow(abs(depth - scanDepth) / 0.32, 2.0)) * 0.26;
+        float tunnelGlow = exp(-length(p - vec2(0.0, 0.0)) * 1.3) * 0.08;
+        vec3 color = gridColor * lines * fade + scanColor * (scanBand * 0.4 + aura + tunnelGlow);
+        float noise = fract(sin(dot(gl_FragCoord.xy + time * 13.0, vec2(12.9898, 78.233))) * 43758.5453);
+        color += (noise - 0.5) * 0.01;
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `;
+
+    function compile(type, source) {
+      const shader = context.createShader(type);
+      context.shaderSource(shader, source);
+      context.compileShader(shader);
+      if (!context.getShaderParameter(shader, context.COMPILE_STATUS)) {
+        context.deleteShader(shader);
+        return null;
+      }
+      return shader;
+    }
+
+    const vertexShader = compile(context.VERTEX_SHADER, vertexSource);
+    const fragmentShader = compile(context.FRAGMENT_SHADER, fragmentSource);
+    if (!vertexShader || !fragmentShader) return;
+    const program = context.createProgram();
+    context.attachShader(program, vertexShader);
+    context.attachShader(program, fragmentShader);
+    context.linkProgram(program);
+    if (!context.getProgramParameter(program, context.LINK_STATUS)) return;
+
+    const buffer = context.createBuffer();
+    context.bindBuffer(context.ARRAY_BUFFER, buffer);
+    context.bufferData(context.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, -1, 1, 1, -1, 1, 1]), context.STATIC_DRAW);
+    const position = context.getAttribLocation(program, 'position');
+    const resolution = context.getUniformLocation(program, 'resolution');
+    const time = context.getUniformLocation(program, 'time');
+    const pointer = context.getUniformLocation(program, 'pointer');
+    let pointerX = 0;
+    let pointerY = 0;
 
     function resize() {
       const scale = Math.min(window.devicePixelRatio || 1, 2);
-      width = window.innerWidth;
-      height = window.innerHeight;
-      canvas.width = width * scale;
-      canvas.height = height * scale;
-      context.setTransform(scale, 0, 0, scale, 0, 0);
+      canvas.width = window.innerWidth * scale;
+      canvas.height = window.innerHeight * scale;
+      context.viewport(0, 0, canvas.width, canvas.height);
     }
 
-    function draw(time) {
-      const gridScale = 0.1;
-      const cellSize = Math.max(22, Math.min(width, height) * gridScale);
-      const horizon = height * 0.43;
-      const vanishingX = width * 0.5;
-      const travel = reduceMotion ? 0.5 : (Math.sin(time * 0.00075) + 1) * 0.5;
-      const lineJitter = reduceMotion ? 0 : Math.sin(time * 0.002) * 0.1;
-      context.clearRect(0, 0, width, height);
-      context.fillStyle = '#05080A';
-      context.fillRect(0, 0, width, height);
+    function onPointerMove(event) {
+      pointerX = (event.clientX / window.innerWidth) * 2 - 1;
+      pointerY = -((event.clientY / window.innerHeight) * 2 - 1);
+    }
 
-      context.lineWidth = 1;
-      context.strokeStyle = '#2F293A';
-      context.globalAlpha = 0.92;
-      for (let x = -width; x <= width * 2; x += cellSize) {
-        const jitteredX = x + lineJitter * cellSize;
-        context.beginPath();
-        context.moveTo(vanishingX, horizon);
-        context.lineTo(jitteredX, height);
-        context.stroke();
-        context.beginPath();
-        context.moveTo(vanishingX, horizon);
-        context.lineTo(jitteredX, 0);
-        context.stroke();
-      }
-
-      function drawDepthPlane(direction) {
-        for (let index = 0; index < 13; index++) {
-          const depth = 0.18 + ((index + travel) % 13) * 0.82;
-          const perspective = 1 - 1 / (1 + depth * 0.5);
-          const y = horizon + direction * perspective * Math.max(horizon + 20, height - horizon);
-          context.beginPath();
-          context.moveTo(0, y);
-          context.lineTo(width, y);
-          context.stroke();
-        }
-      }
-
-      drawDepthPlane(1);
-      drawDepthPlane(-1);
-      context.globalAlpha = 1;
-
-      const scanGlow = context.createRadialGradient(vanishingX, horizon, 0, vanishingX, horizon, width * 0.42);
-      scanGlow.addColorStop(0, 'rgba(255, 159, 252, 0.32)');
-      scanGlow.addColorStop(0.18, 'rgba(255, 159, 252, 0.1)');
-      scanGlow.addColorStop(1, 'rgba(255, 159, 252, 0)');
-      context.fillStyle = scanGlow;
-      context.fillRect(0, 0, width, height);
-
-      context.strokeStyle = '#FF9FFC';
-      context.shadowColor = '#FF9FFC';
-      context.shadowBlur = 14;
-      context.globalAlpha = 0.82;
-      context.beginPath();
-      context.moveTo(0, horizon);
-      context.lineTo(width, horizon);
-      context.stroke();
-      context.shadowBlur = 0;
-      context.globalAlpha = 1;
+    function draw(now) {
+      context.useProgram(program);
+      context.bindBuffer(context.ARRAY_BUFFER, buffer);
+      context.enableVertexAttribArray(position);
+      context.vertexAttribPointer(position, 2, context.FLOAT, false, 0, 0);
+      context.uniform2f(resolution, canvas.width, canvas.height);
+      context.uniform1f(time, reduceMotion ? 1.0 : now * 0.001);
+      context.uniform2f(pointer, pointerX, pointerY);
+      context.drawArrays(context.TRIANGLES, 0, 6);
       if (!reduceMotion) window.requestAnimationFrame(draw);
     }
 
     resize();
     window.addEventListener('resize', resize);
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
     draw(0);
   }
 
@@ -1464,7 +1498,7 @@
     isJuiceCategory = isDrinkCategoryName(cat.name);
     qty = 1;
     note = '';
-    selections = { ice: '', sugar: '', size: 'Regular' };
+    selections = { ice: '', sugar: '' };
 
     document.getElementById('itemSheetTitle').textContent = item.name;
     document.getElementById('noteInput').value = '';
@@ -1475,7 +1509,6 @@
     if (isJuiceCategory) {
       juiceOptions.classList.remove('hidden');
       document.querySelectorAll('#juiceOptions .pill').forEach(p => p.classList.remove('selected'));
-      document.querySelector('#juiceOptions .pill[data-type="size"][data-value="Regular"]').classList.add('selected');
     } else {
       juiceOptions.classList.add('hidden');
     }
@@ -1485,8 +1518,7 @@
 
   function updateAddToCartLabel() {
     if (!currentItem) return;
-    const unitPrice = currentItem.price + (isJuiceCategory && selections.size === 'Large' ? 10 : 0);
-    addToCart.textContent = 'Add to Cart · ' + formatPrice(unitPrice * qty);
+    addToCart.textContent = 'Add to Cart · ' + formatPrice(currentItem.price * qty);
   }
 
   function closeSheet(sheet) {
@@ -1547,10 +1579,6 @@
       const options = [];
       if (selections.ice) options.push(selections.ice);
       if (selections.sugar) options.push(selections.sugar);
-      if (selections.size === 'Large') {
-        unitPrice += 10;
-        options.push('Large');
-      }
       if (options.length) {
         name += ' (' + options.join(', ') + ')';
       }
