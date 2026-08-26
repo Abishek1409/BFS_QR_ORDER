@@ -1316,32 +1316,64 @@
     }
 
     function draw(time) {
-      const cellSize = Math.max(22, Math.min(width, height) * 0.1);
-      const scanPosition = reduceMotion ? height * 0.45 : (time * 0.12) % (height + 180) - 90;
+      const gridScale = 0.1;
+      const cellSize = Math.max(22, Math.min(width, height) * gridScale);
+      const horizon = height * 0.43;
+      const vanishingX = width * 0.5;
+      const travel = reduceMotion ? 0.5 : (Math.sin(time * 0.00075) + 1) * 0.5;
+      const lineJitter = reduceMotion ? 0 : Math.sin(time * 0.002) * 0.1;
       context.clearRect(0, 0, width, height);
       context.fillStyle = '#05080A';
       context.fillRect(0, 0, width, height);
+
       context.lineWidth = 1;
       context.strokeStyle = '#2F293A';
-      context.globalAlpha = 0.88;
-      for (let x = 0; x <= width; x += cellSize) {
-        context.beginPath(); context.moveTo(x, 0); context.lineTo(x, height); context.stroke();
+      context.globalAlpha = 0.92;
+      for (let x = -width; x <= width * 2; x += cellSize) {
+        const jitteredX = x + lineJitter * cellSize;
+        context.beginPath();
+        context.moveTo(vanishingX, horizon);
+        context.lineTo(jitteredX, height);
+        context.stroke();
+        context.beginPath();
+        context.moveTo(vanishingX, horizon);
+        context.lineTo(jitteredX, 0);
+        context.stroke();
       }
-      for (let y = 0; y <= height; y += cellSize) {
-        context.beginPath(); context.moveTo(0, y); context.lineTo(width, y); context.stroke();
+
+      function drawDepthPlane(direction) {
+        for (let index = 0; index < 13; index++) {
+          const depth = 0.18 + ((index + travel) % 13) * 0.82;
+          const perspective = 1 - 1 / (1 + depth * 0.5);
+          const y = horizon + direction * perspective * Math.max(horizon + 20, height - horizon);
+          context.beginPath();
+          context.moveTo(0, y);
+          context.lineTo(width, y);
+          context.stroke();
+        }
       }
+
+      drawDepthPlane(1);
+      drawDepthPlane(-1);
       context.globalAlpha = 1;
-      const scanGradient = context.createLinearGradient(0, scanPosition - 100, 0, scanPosition + 100);
-      scanGradient.addColorStop(0, 'rgba(255, 159, 252, 0)');
-      scanGradient.addColorStop(0.5, 'rgba(255, 159, 252, 0.22)');
-      scanGradient.addColorStop(1, 'rgba(255, 159, 252, 0)');
-      context.fillStyle = scanGradient;
-      context.fillRect(0, scanPosition - 100, width, 200);
+
+      const scanGlow = context.createRadialGradient(vanishingX, horizon, 0, vanishingX, horizon, width * 0.42);
+      scanGlow.addColorStop(0, 'rgba(255, 159, 252, 0.32)');
+      scanGlow.addColorStop(0.18, 'rgba(255, 159, 252, 0.1)');
+      scanGlow.addColorStop(1, 'rgba(255, 159, 252, 0)');
+      context.fillStyle = scanGlow;
+      context.fillRect(0, 0, width, height);
+
       context.strokeStyle = '#FF9FFC';
       context.shadowColor = '#FF9FFC';
-      context.shadowBlur = 12;
-      context.beginPath(); context.moveTo(0, scanPosition); context.lineTo(width, scanPosition); context.stroke();
+      context.shadowBlur = 14;
+      context.globalAlpha = 0.82;
+      context.beginPath();
+      context.moveTo(0, horizon);
+      context.lineTo(width, horizon);
+      context.stroke();
       context.shadowBlur = 0;
+      context.globalAlpha = 1;
       if (!reduceMotion) window.requestAnimationFrame(draw);
     }
 
