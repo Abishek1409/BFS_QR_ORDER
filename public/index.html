@@ -110,8 +110,8 @@
     border: 1px solid rgba(22, 163, 74, 0.22);
     border-radius: 28px;
     overflow: hidden;
-    background: #DFF7E8;
-    box-shadow: 0 18px 38px rgba(22, 101, 52, 0.1);
+    background: #05080A;
+    box-shadow: 0 18px 38px rgba(16, 24, 40, 0.14);
   }
 
   .hero-visual canvas {
@@ -1231,24 +1231,51 @@
 
     function draw(time) {
       context.clearRect(0, 0, width, height);
-      const centerX = width * 0.58;
-      const centerY = height * 0.48;
-      const radius = Math.min(width, height) * 0.36;
-      const drift = reduceMotion ? 0 : time * 0.00035;
+      context.fillStyle = '#05080A';
+      context.fillRect(0, 0, width, height);
 
-      for (let y = 12; y < height; y += 8) {
-        for (let x = 12; x < width; x += 8) {
-          const distance = Math.hypot(x - centerX, y - centerY);
-          const edge = distance - radius;
-          const wave = Math.sin(x * 0.035 + y * 0.02 + drift) * 5;
-          const opacity = Math.max(0, Math.min(0.85, (radius - edge + wave) / 36));
-          if (opacity <= 0) continue;
-          context.fillStyle = `rgba(22, 163, 74, ${opacity})`;
+      const centerX = width * 0.56;
+      const centerY = height * 0.5;
+      const shapeWidth = Math.min(width * 0.82, 470);
+      const shapeHeight = Math.min(height * 1.2, 390);
+      const rotation = reduceMotion ? 0 : time * 0.00022;
+      const dotSize = Math.max(1.1, Math.min(width, height) * 0.004);
+      const spacing = dotSize * 4.1;
+
+      context.save();
+      context.beginPath();
+      context.ellipse(centerX, centerY, shapeWidth * 0.5, shapeHeight * 0.5, 0, 0, Math.PI * 2);
+      context.clip();
+
+      for (let y = -spacing; y < height + spacing; y += spacing) {
+        for (let x = -spacing; x < width + spacing; x += spacing) {
+          const localX = x - centerX;
+          const localY = y - centerY;
+          const distance = Math.hypot(localX, localY);
+          const angle = Math.atan2(localY, localX);
+          const spiral = angle + distance * 0.012 - rotation;
+          const band = Math.sin(spiral * 3.1 + distance * 0.025);
+          const glow = Math.max(0, Math.min(1, (band + 0.25) * 0.85));
+          const edgeFade = Math.max(0, 1 - Math.max(0, distance - shapeWidth * 0.28) / (shapeWidth * 0.25));
+          const opacity = glow * edgeFade;
+          if (opacity < 0.08) continue;
+          context.fillStyle = `rgba(0, 190, 255, ${0.35 + opacity * 0.65})`;
           context.beginPath();
-          context.arc(x, y, 1.8, 0, Math.PI * 2);
+          context.arc(x, y, dotSize * (0.65 + opacity * 0.5), 0, Math.PI * 2);
           context.fill();
         }
       }
+
+      context.restore();
+      context.save();
+      context.strokeStyle = '#16A34A';
+      context.lineWidth = 5;
+      context.lineCap = 'round';
+      context.beginPath();
+      context.moveTo(centerX - shapeWidth * 0.34, centerY - shapeHeight * 0.32);
+      context.lineTo(centerX - shapeWidth * 0.22, centerY - shapeHeight * 0.22);
+      context.stroke();
+      context.restore();
 
       if (!reduceMotion) window.requestAnimationFrame(draw);
     }
