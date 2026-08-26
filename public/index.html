@@ -547,8 +547,8 @@
 
   .btn-primary {
     background: var(--color-primary);
-    color: #06170F;
-    box-shadow: 0 4px 12px rgba(45, 212, 160, 0.3);
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
   }
 
   .btn-primary:disabled {
@@ -565,8 +565,8 @@
 
   .btn-success {
     background: var(--color-success);
-    color: #06170F;
-    box-shadow: 0 4px 12px rgba(45, 212, 160, 0.3);
+    color: #FFFFFF;
+    box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
   }
 
   .btn-row {
@@ -657,9 +657,9 @@
 
   /* Confirmation screen */
   .confirm-screen {
-     position: fixed;
-     inset: 0;
-     background: var(--color-bg);
+    position: fixed;
+    inset: 0;
+    background: var(--color-bg);
     z-index: 200;
     display: flex;
     flex-direction: column;
@@ -690,9 +690,14 @@
   .confirm-body {
     font-size: 15px;
     color: var(--color-text-secondary);
-      background: var(--color-primary);
-      color: #FFFFFF;
-      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+    line-height: 1.5;
+    margin-bottom: 20px;
+  }
+
+  .confirm-action {
+    max-width: 240px;
+  }
+
   .hidden { display: none !important; }
 
   @media (max-width: 900px) {
@@ -708,9 +713,8 @@
       display: block;
       padding: 16px;
     }
-      background: var(--color-success);
-      color: #FFFFFF;
-      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
+
+    .sheet.cart-panel {
       top: auto;
       bottom: 0;
       left: 50%;
@@ -846,6 +850,7 @@
   <div class="confirm-emoji">✅</div>
   <div class="confirm-title">Order placed!</div>
   <div class="confirm-body" id="confirmBody">Table — your order is with the kitchen.<br>You can close this tab now.</div>
+  <button class="btn btn-primary confirm-action" id="orderMore">Order More</button>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -881,6 +886,7 @@
   const cartSheet = document.getElementById('cartSheet');
   const confirmScreen = document.getElementById('confirmScreen');
   const confirmBody = document.getElementById('confirmBody');
+  const orderMore = document.getElementById('orderMore');
 
   let menu = {
     categories: [
@@ -1197,18 +1203,17 @@
 
       confirmBody.innerHTML = `Table <strong>${escapeHtml(table)}</strong> — your order is with the kitchen.<br>You can close this tab now.`;
       confirmScreen.classList.remove('hidden');
-
-      // Note: Browsers only allow scripts to auto-close tabs they opened themselves.
-      // When a user scans a QR code, the browser opens the tab — so window.close() will
-      // silently fail here. The on-screen confirmation message is the real fallback.
-      setTimeout(() => {
-        try { window.close(); } catch (e) { /* ignore */ }
-      }, 1000);
     } catch (err) {
       alert('Could not place order. Please check your WiFi and try again.');
       btn.disabled = false;
       btn.textContent = 'Confirm Order';
     }
+  });
+
+  orderMore.addEventListener('click', () => {
+    confirmScreen.classList.add('hidden');
+    buildMenu();
+    window.scrollTo(0, 0);
   });
 
   renderCartSheet();
