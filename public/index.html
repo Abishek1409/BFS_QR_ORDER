@@ -6,32 +6,32 @@
 <title>Best Fruits Stall — Order</title>
 <style>
   :root {
-    --color-primary: #16A34A;
-    --color-primary-dark: #15803D;
-    --color-primary-light: #ECFDF3;
+    --color-primary: #FF9FFC;
+    --color-primary-dark: #FFB8FC;
+    --color-primary-light: #382B43;
     --color-success: #16A34A;
-    --color-success-dark: #15803D;
-    --color-danger: #EF4444;
-    --color-bg: #F7F8F9;
-    --color-header: #FFFFFF;
-    --color-surface: #FFFFFF;
-    --color-surface-raised: #FFFFFF;
-    --color-text: #16181D;
-    --color-text-secondary: #6B7280;
-    --color-border: #E7E9EC;
-    --color-ice: #0EA5E9;
-    --color-sugar: #F59E0B;
-    --color-size: #8B5CF6;
+    --color-success-dark: #86EFAC;
+    --color-danger: #FF7A9E;
+    --color-bg: #05080A;
+    --color-header: #090B10;
+    --color-surface: #0D1117;
+    --color-surface-raised: #121722;
+    --color-text: #F4F7FA;
+    --color-text-secondary: #A7B0BD;
+    --color-border: #2F293A;
+    --color-ice: #00BEFF;
+    --color-sugar: #F5C15D;
+    --color-size: #C5A1FF;
     --color-juice: #16A34A;
-    --color-shake: #EC4899;
-    --color-snack: #F97316;
-    --color-special: #CA8A04;
+    --color-shake: #FF9FFC;
+    --color-snack: #FF9A62;
+    --color-special: #FFD66B;
     --radius-sm: 8px;
     --radius-md: 14px;
     --radius-lg: 20px;
-    --shadow-sm: 0 5px 14px rgba(16, 24, 40, 0.06);
-    --shadow-md: 0 12px 28px rgba(16, 24, 40, 0.09);
-    --shadow-lg: 0 20px 48px rgba(16, 24, 40, 0.14);
+    --shadow-sm: 0 5px 14px rgba(0, 0, 0, 0.24);
+    --shadow-md: 0 12px 28px rgba(0, 0, 0, 0.36);
+    --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.52);
     --font-stack: "Avenir Next", "Trebuchet MS", sans-serif;
   }
 
@@ -67,7 +67,7 @@
     min-height: 430px;
     overflow: hidden;
     border-bottom: 1px solid var(--color-border);
-    background: #F0FDF4;
+    background: rgba(5, 8, 10, 0.78);
   }
 
   .hero-inner {
@@ -118,11 +118,11 @@
   .hero-visual {
     position: relative;
     min-height: 320px;
-    border: 1px solid rgba(22, 163, 74, 0.22);
+    border: 1px solid rgba(255, 159, 252, 0.28);
     border-radius: 28px;
     overflow: hidden;
     background: #05080A;
-    box-shadow: 0 18px 38px rgba(16, 24, 40, 0.14);
+    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.42);
   }
 
   .hero-visual canvas {
@@ -137,10 +137,10 @@
     right: 20px;
     bottom: 18px;
     padding: 8px 12px;
-    border: 1px solid rgba(22, 101, 52, 0.2);
+    border: 1px solid rgba(255, 159, 252, 0.3);
     border-radius: 50px;
-    background: rgba(255, 255, 255, 0.76);
-    color: var(--color-primary-dark);
+    background: rgba(18, 23, 34, 0.82);
+    color: #FF9FFC;
     font-size: 11px;
     font-weight: 800;
     letter-spacing: 0.7px;
@@ -197,9 +197,9 @@
   }
 
   .table-badge {
-    background: var(--color-primary-light);
+    background: rgba(22, 163, 74, 0.16);
     border: 1px solid #86EFAC;
-    color: var(--color-primary-dark);
+    color: #86EFAC;
     font-size: 13px;
     font-weight: 600;
     padding: 7px 14px;
@@ -291,10 +291,10 @@
     color: var(--color-primary-dark);
   }
 
-.item-badge.juice { background: #DCFCE7; color: #166534; }
-.item-badge.shake { background: #FCE7F3; color: #9D174D; }
-.item-badge.snack { background: #FFEDD5; color: #C2410C; }
-.item-badge.special { background: #FEF3C7; color: #92400E; }
+.item-badge.juice { background: rgba(22, 163, 74, 0.2); color: #86EFAC; }
+.item-badge.shake { background: rgba(255, 159, 252, 0.18); color: #FFB8FC; }
+.item-badge.snack { background: rgba(255, 154, 98, 0.18); color: #FFB08A; }
+.item-badge.special { background: rgba(255, 214, 107, 0.18); color: #FFD66B; }
 
   .category-tabs {
     display: flex;
@@ -654,9 +654,9 @@
     color: var(--color-primary-dark);
   }
 
-  .pill.ice.selected { border-color: var(--color-ice); background: #EAF6FD; color: #2471A3; }
-  .pill.sugar.selected { border-color: var(--color-sugar); background: #FEF5E7; color: #D68910; }
-  .pill.size.selected { border-color: var(--color-size); background: #F4ECF7; color: #7D3C98; }
+  .pill.ice.selected { border-color: var(--color-ice); background: rgba(0, 190, 255, 0.15); color: #7DDBFF; }
+  .pill.sugar.selected { border-color: var(--color-sugar); background: rgba(245, 193, 93, 0.15); color: #FFD77D; }
+  .pill.size.selected { border-color: var(--color-size); background: rgba(197, 161, 255, 0.15); color: #D8C3FF; }
 
   /* Quantity stepper */
   .qty-stepper {
