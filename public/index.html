@@ -6,33 +6,32 @@
 <title>Best Fruits Stall — Order</title>
 <style>
   :root {
-    --color-primary: #FF8066;
-    --color-primary-dark: #E85B46;
-    --color-primary-light: #432536;
-    --color-success: #FF8066;
-    --color-success-dark: #E85B46;
-    --color-danger: #FF8D8D;
-    --color-bg: #17121D;
-    --color-bg-gradient: radial-gradient(circle at 8% 0%, #392035 0%, #17121D 48%, #100D15 100%);
-    --color-header: linear-gradient(115deg, #261629, #7A3545 54%, #B6534D);
-    --color-surface: #241A2B;
-    --color-surface-raised: #302039;
-    --color-text: #FFF3E8;
-    --color-text-secondary: #C8AEB7;
-    --color-border: #503047;
-    --color-ice: #72C9D7;
-    --color-sugar: #F2BD62;
-    --color-size: #D6A4D0;
-    --color-juice: #F2A65A;
-    --color-shake: #E58CA7;
-    --color-snack: #D7B56D;
-    --color-special: #F6D77A;
+    --color-primary: #16A34A;
+    --color-primary-dark: #15803D;
+    --color-primary-light: #ECFDF3;
+    --color-success: #16A34A;
+    --color-success-dark: #15803D;
+    --color-danger: #EF4444;
+    --color-bg: #F7F8F9;
+    --color-header: #FFFFFF;
+    --color-surface: #FFFFFF;
+    --color-surface-raised: #FFFFFF;
+    --color-text: #16181D;
+    --color-text-secondary: #6B7280;
+    --color-border: #E7E9EC;
+    --color-ice: #0EA5E9;
+    --color-sugar: #F59E0B;
+    --color-size: #8B5CF6;
+    --color-juice: #16A34A;
+    --color-shake: #EC4899;
+    --color-snack: #F97316;
+    --color-special: #CA8A04;
     --radius-sm: 8px;
     --radius-md: 14px;
     --radius-lg: 20px;
-    --shadow-sm: 0 5px 14px rgba(9, 5, 12, 0.24);
-    --shadow-md: 0 12px 28px rgba(9, 5, 12, 0.34);
-    --shadow-lg: 0 20px 48px rgba(9, 5, 12, 0.52);
+    --shadow-sm: 0 5px 14px rgba(16, 24, 40, 0.06);
+    --shadow-md: 0 12px 28px rgba(16, 24, 40, 0.09);
+    --shadow-lg: 0 20px 48px rgba(16, 24, 40, 0.14);
     --font-stack: "Avenir Next", "Trebuchet MS", sans-serif;
   }
 
@@ -41,8 +40,7 @@
   html, body {
     height: 100%;
     font-family: var(--font-stack);
-    background: var(--color-bg-gradient), var(--color-bg);
-    background-attachment: fixed;
+    background: var(--color-bg);
     color: var(--color-text);
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
@@ -51,17 +49,6 @@
   body {
     padding-bottom: 80px;
     position: relative;
-  }
-
-  body::before {
-    content: '';
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    opacity: 0.14;
-    background-image: radial-gradient(rgba(255,243,232,0.7) 0.7px, transparent 0.7px);
-    background-size: 7px 7px;
-    mask-image: linear-gradient(to bottom, black, transparent 82%);
   }
 
   .app-layout {
@@ -83,8 +70,8 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    box-shadow: 0 10px 28px rgba(9, 5, 12, 0.28);
-    border-bottom: 1px solid rgba(255,243,232,0.18);
+    box-shadow: 0 4px 16px rgba(16, 24, 40, 0.06);
+    border-bottom: 1px solid var(--color-border);
   }
 
   .brand {
@@ -94,14 +81,14 @@
     font-size: 21px;
     font-weight: 700;
     letter-spacing: -0.3px;
-    color: #fff;
+    color: var(--color-text);
   }
 
   .brand-sub {
     display: block;
     font-size: 11px;
     font-weight: 500;
-    color: rgba(255,243,232,0.72);
+    color: var(--color-text-secondary);
     margin-top: 2px;
     letter-spacing: 0.2px;
   }
@@ -112,9 +99,9 @@
   }
 
   .table-badge {
-    background: rgba(23,18,29,0.24);
-    border: 1px solid rgba(255,243,232,0.3);
-    color: var(--color-text);
+    background: var(--color-primary-light);
+    border: 1px solid #86EFAC;
+    color: var(--color-primary-dark);
     font-size: 13px;
     font-weight: 600;
     padding: 7px 14px;
@@ -148,7 +135,7 @@
   }
 
   .item-card {
-    background: linear-gradient(145deg, rgba(255,255,255,0.06), transparent 34%), var(--color-surface);
+    background: var(--color-surface);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-md);
     padding: 17px;
@@ -170,8 +157,8 @@
 
   .item-card:hover {
     transform: translateY(-3px);
-    border-color: rgba(255,128,102,0.72);
-    box-shadow: 0 12px 24px rgba(9, 5, 12, 0.34);
+    border-color: rgba(22, 163, 74, 0.55);
+    box-shadow: 0 12px 24px rgba(16, 24, 40, 0.12);
   }
 
   .item-name {
@@ -203,13 +190,13 @@
     letter-spacing: 0.4px;
     padding: 4px 9px;
     border-radius: 20px;
-    color: #06170F;
+    color: var(--color-primary-dark);
   }
 
-  .item-badge.juice { background: var(--color-juice); }
-  .item-badge.shake { background: var(--color-shake); }
-  .item-badge.snack { background: var(--color-snack); }
-  .item-badge.special { background: var(--color-special); }
+.item-badge.juice { background: #DCFCE7; color: #166534; }
+.item-badge.shake { background: #FCE7F3; color: #9D174D; }
+.item-badge.snack { background: #FFEDD5; color: #C2410C; }
+.item-badge.special { background: #FEF3C7; color: #92400E; }
 
   .category-tabs {
     display: flex;
@@ -227,7 +214,7 @@
     padding: 9px 16px;
     border-radius: 20px;
     border: 1px solid var(--color-border);
-    background: rgba(36,26,43,0.72);
+    background: var(--color-surface);
     color: var(--color-text-secondary);
     font-size: 13px;
     font-weight: 600;
@@ -239,8 +226,8 @@
   .tab-pill.active {
     background: var(--color-primary);
     border-color: var(--color-primary);
-    color: #24131B;
-    box-shadow: 0 6px 16px rgba(255,128,102,0.22);
+    color: #FFFFFF;
+    box-shadow: 0 6px 16px rgba(22, 163, 74, 0.18);
   }
 
   .empty-state {
@@ -268,8 +255,8 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 50;
-    background: var(--color-text);
-    color: #fff;
+    background: #16181D;
+    color: #FFFFFF;
     border-radius: 50px;
     padding: 12px 24px;
     display: flex;
@@ -348,9 +335,9 @@
 
   /* Overlay */
   .overlay {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.45);
+     position: fixed;
+     inset: 0;
+     background: rgba(16, 24, 40, 0.4);
     z-index: 90;
     opacity: 0;
     pointer-events: none;
@@ -670,9 +657,9 @@
 
   /* Confirmation screen */
   .confirm-screen {
-    position: fixed;
-    inset: 0;
-    background: var(--color-bg-gradient), var(--color-bg);
+     position: fixed;
+     inset: 0;
+     background: var(--color-bg);
     z-index: 200;
     display: flex;
     flex-direction: column;
@@ -703,9 +690,9 @@
   .confirm-body {
     font-size: 15px;
     color: var(--color-text-secondary);
-    line-height: 1.5;
-  }
-
+      background: var(--color-primary);
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
   .hidden { display: none !important; }
 
   @media (max-width: 900px) {
@@ -721,9 +708,9 @@
       display: block;
       padding: 16px;
     }
-
-    .sheet.cart-panel {
-      position: fixed;
+      background: var(--color-success);
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.2);
       top: auto;
       bottom: 0;
       left: 50%;
