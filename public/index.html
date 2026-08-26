@@ -1475,6 +1475,7 @@
     if (isJuiceCategory) {
       juiceOptions.classList.remove('hidden');
       document.querySelectorAll('#juiceOptions .pill').forEach(p => p.classList.remove('selected'));
+      document.querySelector('#juiceOptions .pill[data-type="size"][data-value="Regular"]').classList.add('selected');
     } else {
       juiceOptions.classList.add('hidden');
     }
@@ -1533,6 +1534,11 @@
 
   addToCart.addEventListener('click', () => {
     if (!currentItem) return;
+
+    if (isJuiceCategory && (!selections.ice || !selections.sugar)) {
+      alert('Please choose your ice preference and sugar level.');
+      return;
+    }
 
     let unitPrice = currentItem.price;
     let name = currentItem.name;
