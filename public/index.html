@@ -54,106 +54,125 @@
     position: fixed;
     inset: 0;
     z-index: 0;
-    width: 100%;
-    height: 100%;
+    width: 100vw;
+    height: 100vh;
     pointer-events: none;
-    opacity: 0.9;
-  }
-
-  #gridScanFallback {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    opacity: 0.9;
+    display: block;
+    opacity: 1;
   }
 
   .hero {
     position: relative;
     z-index: 1;
-    min-height: 430px;
+    min-height: 480px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
     overflow: hidden;
     border-bottom: 1px solid var(--color-border);
-    background: linear-gradient(180deg, rgba(5, 8, 10, 0.25) 0%, rgba(5, 8, 10, 0.65) 100%);
+    background: transparent;
+    padding: 64px 20px;
   }
 
   .hero-inner {
-    display: grid;
-    grid-template-columns: minmax(0, 0.9fr) minmax(360px, 1.1fr);
-    gap: 28px;
-    align-items: center;
-    max-width: 1240px;
-    min-height: 430px;
+    max-width: 820px;
     margin: 0 auto;
-    padding: 54px 24px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    z-index: 2;
   }
 
-  .hero-copy { position: relative; z-index: 1; }
+  .hero-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
 
   .hero-kicker {
-    margin-bottom: 16px;
-    color: var(--color-primary-dark);
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 20px;
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    padding: 6px 16px;
+    background: rgba(18, 23, 34, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 50px;
+    backdrop-filter: blur(8px);
+  }
+
+  .hero-badge {
+    display: inline-block;
+    padding: 2px 9px;
+    background: rgba(255, 159, 252, 0.18);
+    border: 1px solid rgba(255, 159, 252, 0.4);
+    border-radius: 50px;
+    color: var(--color-primary);
     font-size: 11px;
     font-weight: 800;
-    letter-spacing: 1.4px;
-    text-transform: uppercase;
+    margin-right: 8px;
+    letter-spacing: 1px;
   }
 
   .hero-title {
-    max-width: 520px;
+    max-width: 720px;
     color: var(--color-text);
-    font-size: clamp(40px, 5.5vw, 72px);
-    line-height: 0.98;
-    letter-spacing: -2.5px;
+    font-size: clamp(36px, 6vw, 64px);
+    font-weight: 800;
+    line-height: 1.05;
+    letter-spacing: -2px;
+    margin-bottom: 18px;
+    text-shadow: 0 4px 24px rgba(0, 0, 0, 0.8);
   }
 
   .hero-description {
-    max-width: 410px;
-    margin: 22px 0 28px;
+    max-width: 520px;
+    margin: 0 auto 28px;
     color: var(--color-text-secondary);
-    font-size: 16px;
+    font-size: clamp(15px, 2vw, 18px);
     line-height: 1.55;
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.7);
+  }
+
+  .hero-actions {
+    display: flex;
+    gap: 14px;
+    justify-content: center;
+    flex-wrap: wrap;
   }
 
   .hero-cta {
     display: inline-flex;
     width: auto;
-    padding: 13px 21px;
+    padding: 13px 24px;
     text-decoration: none;
+    font-size: 15px;
+    font-weight: 700;
   }
 
-  .hero-visual {
-    position: relative;
-    min-height: 320px;
-    border: 1px solid rgba(255, 159, 252, 0.28);
-    border-radius: 28px;
-    overflow: hidden;
-    background: #05080A;
-    box-shadow: 0 18px 38px rgba(0, 0, 0, 0.42);
+  .hero-cta-secondary {
+    display: inline-flex;
+    width: auto;
+    padding: 13px 24px;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 700;
+    background: rgba(18, 23, 34, 0.75);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+    border-radius: var(--radius-md);
+    transition: background 0.2s, border-color 0.2s;
   }
 
-  .hero-visual canvas {
-    display: block;
-    width: 100%;
-    height: 100%;
-    min-height: 320px;
-  }
-
-  .hero-stamp {
-    position: absolute;
-    right: 20px;
-    bottom: 18px;
-    padding: 8px 12px;
-    border: 1px solid rgba(255, 159, 252, 0.3);
-    border-radius: 50px;
-    background: rgba(18, 23, 34, 0.82);
-    color: #FF9FFC;
-    font-size: 11px;
-    font-weight: 800;
-    letter-spacing: 0.7px;
-    text-transform: uppercase;
+  .hero-cta-secondary:hover {
+    background: var(--color-surface-raised);
+    border-color: rgba(255, 159, 252, 0.35);
   }
 
   .app-layout {
@@ -964,11 +983,11 @@
     .cart-bar { display: none; }
   }
 </style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
 <canvas id="gridScanBackground" aria-hidden="true"></canvas>
-<canvas id="gridScanFallback" aria-hidden="true"></canvas>
 
 <header class="page-header">
   <div class="brand">
@@ -981,14 +1000,13 @@
 <section class="hero" aria-labelledby="heroTitle">
   <div class="hero-inner">
     <div class="hero-copy">
-      <div class="hero-kicker">Best Fruits Stall · Fresh today</div>
+      <div class="hero-kicker"><span class="hero-badge">NEW</span> Fresh today</div>
       <h1 class="hero-title" id="heroTitle">Fresh fruit, made your way.</h1>
       <p class="hero-description">Juices, shakes, and quick bites prepared fresh for your table.</p>
-      <a class="btn btn-primary hero-cta" href="#menuContainer">Start an order</a>
-    </div>
-    <div class="hero-visual" aria-hidden="true">
-      <canvas id="heroDither" width="720" height="420"></canvas>
-      <div class="hero-stamp">Pressed to order</div>
+      <div class="hero-actions">
+        <a class="btn btn-primary hero-cta" href="#menuContainer">Start an order</a>
+        <a class="btn hero-cta-secondary" href="#menuContainer">Explore menu</a>
+      </div>
     </div>
   </div>
 </section>
@@ -1106,7 +1124,6 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function() {
   'use strict';
@@ -1231,83 +1248,9 @@
     return '₹' + p.toFixed(0);
   }
 
-  function initHeroDither() {
-    const canvas = document.getElementById('heroDither');
-    if (!canvas) return;
-    const context = canvas.getContext('2d');
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let width = 0;
-    let height = 0;
-
-    function resize() {
-      const bounds = canvas.getBoundingClientRect();
-      const scale = Math.min(window.devicePixelRatio || 1, 2);
-      width = bounds.width;
-      height = bounds.height;
-      canvas.width = width * scale;
-      canvas.height = height * scale;
-      context.setTransform(scale, 0, 0, scale, 0, 0);
-    }
-
-    function draw(time) {
-      context.clearRect(0, 0, width, height);
-      context.fillStyle = '#05080A';
-      context.fillRect(0, 0, width, height);
-      const centerX = width * 0.56;
-      const centerY = height * 0.5;
-      const shapeWidth = Math.min(width * 0.82, 470);
-      const shapeHeight = Math.min(height * 1.2, 390);
-      const rotation = reduceMotion ? 0 : time * 0.00022;
-      const dotSize = Math.max(1.1, Math.min(width, height) * 0.004);
-      const spacing = dotSize * 4.1;
-
-      context.save();
-      context.beginPath();
-      context.ellipse(centerX, centerY, shapeWidth * 0.5, shapeHeight * 0.5, 0, 0, Math.PI * 2);
-      context.clip();
-      for (let y = -spacing; y < height + spacing; y += spacing) {
-        for (let x = -spacing; x < width + spacing; x += spacing) {
-          const localX = x - centerX;
-          const localY = y - centerY;
-          const distance = Math.hypot(localX, localY);
-          const angle = Math.atan2(localY, localX);
-          const spiral = angle + distance * 0.012 - rotation;
-          const band = Math.sin(spiral * 3.1 + distance * 0.025);
-          const glow = Math.max(0, Math.min(1, (band + 0.25) * 0.85));
-          const edgeFade = Math.max(0, 1 - Math.max(0, distance - shapeWidth * 0.28) / (shapeWidth * 0.25));
-          const opacity = glow * edgeFade;
-          if (opacity < 0.08) continue;
-          context.fillStyle = `rgba(0, 190, 255, ${0.35 + opacity * 0.65})`;
-          context.beginPath();
-          context.arc(x, y, dotSize * (0.65 + opacity * 0.5), 0, Math.PI * 2);
-          context.fill();
-        }
-      }
-      context.restore();
-
-      context.save();
-      context.strokeStyle = '#16A34A';
-      context.lineWidth = 5;
-      context.lineCap = 'round';
-      context.beginPath();
-      context.moveTo(centerX - shapeWidth * 0.34, centerY - shapeHeight * 0.32);
-      context.lineTo(centerX - shapeWidth * 0.22, centerY - shapeHeight * 0.22);
-      context.stroke();
-      context.restore();
-
-      if (!reduceMotion) window.requestAnimationFrame(draw);
-    }
-
-    resize();
-    window.addEventListener('resize', resize);
-    draw(0);
-  }
-
   function initGridScanBackground() {
     const canvas = document.getElementById('gridScanBackground');
     if (!canvas || !window.THREE) return;
-
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     const vert = `
       varying vec2 vUv;
@@ -1318,7 +1261,6 @@
     `;
 
     const frag = `
-      #extension GL_OES_standard_derivatives : enable
       precision highp float;
       uniform vec3 iResolution;
       uniform float iTime;
@@ -1371,7 +1313,7 @@
         vec3 color = vec3(0.0);
         float minT = 1e20;
         float gridScale = max(1e-5, uGridScale);
-        float fadeStrength = 2.0;
+        float fadeStrength = 1.6;
         vec2 gridUV = vec2(0.0);
 
         float hitIsY = 1.0;
@@ -1560,12 +1502,12 @@
         float n = fract(sin(dot(gl_FragCoord.xy + vec2(iTime * 123.4), vec2(12.9898,78.233))) * 43758.5453123);
         color += (n - 0.5) * uNoise;
         color = clamp(color, 0.0, 1.0);
-        float alpha = clamp(max(lineVis, combinedPulse), 0.0, 1.0);
+        float alpha = clamp(max(lineVis, combinedPulse) * 1.5 + 0.35, 0.0, 1.0);
         float gx = 1.0 - smoothstep(tx * 2.0, tx * 2.0 + aax * 2.0, ax);
         float gy = 1.0 - smoothstep(ty * 2.0, ty * 2.0 + aay * 2.0, ay);
         float halo = max(gx, gy) * fade;
         alpha = max(alpha, halo * clamp(uBloomOpacity, 0.0, 1.0));
-        fragColor = vec4(color, alpha);
+        fragColor = vec4(color, 1.0);
       }
 
       void main(){
@@ -1574,14 +1516,6 @@
         gl_FragColor = c;
       }
     `;
-
-    function srgbColor(hex) {
-      const c = new THREE.Color(hex);
-      if (typeof c.convertSRGBToLinear === 'function') {
-        return c.convertSRGBToLinear();
-      }
-      return c;
-    }
 
     function smoothDampVec2(current, target, currentVelocity, smoothTime, maxSpeed, deltaTime) {
       const out = current.clone();
@@ -1644,7 +1578,6 @@
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
       renderer.setSize(window.innerWidth, window.innerHeight);
       renderer.autoClear = false;
-      renderer.setClearColor(0x000000, 0);
 
       const sensitivity = 0.55;
       const s = Math.min(Math.max(sensitivity, 0), 1);
@@ -1664,29 +1597,29 @@
         uTilt: { value: 0 },
         uYaw: { value: 0 },
         uLineThickness: { value: 1.0 },
-        uLinesColor: { value: srgbColor('#2F293A') },
-        uScanColor: { value: srgbColor('#FF9FFC') },
+        uLinesColor: { value: new THREE.Vector3(0.25, 0.20, 0.32) }, // #2F293A
+        uScanColor: { value: new THREE.Vector3(1.0, 0.624, 0.988) }, // #FF9FFC
         uGridScale: { value: 0.1 },
         uLineStyle: { value: 0 },
         uLineJitter: { value: 0.1 },
-        uScanOpacity: { value: 0.4 },
+        uScanOpacity: { value: 0.5 },
         uNoise: { value: 0.01 },
         uBloomOpacity: { value: 0.6 },
-        uScanGlow: { value: 0.5 },
+        uScanGlow: { value: 0.6 },
         uScanSoftness: { value: 2.0 },
         uPhaseTaper: { value: 0.9 },
         uScanDuration: { value: 2.0 },
-        uScanDelay: { value: 2.0 },
-        uScanDirection: { value: 2 }, // pingpong
-        uScanStarts: { value: new Array(8).fill(0) },
+        uScanDelay: { value: 0.2 },
+        uScanDirection: { value: 2.0 }, // pingpong
+        uScanStarts: { value: new Float32Array(8) },
         uScanCount: { value: 0 }
       };
 
       const material = new THREE.ShaderMaterial({
-        uniforms,
+        uniforms: uniforms,
         vertexShader: vert,
         fragmentShader: frag,
-        transparent: true,
+        transparent: false,
         depthWrite: false,
         depthTest: false,
         extensions: { derivatives: true }
@@ -1745,24 +1678,21 @@
         const dt = Math.max(0, Math.min(0.1, (now - last) / 1000));
         last = now;
 
-        if (!reduceMotion) {
-          lookCurrent.copy(smoothDampVec2(lookCurrent, lookTarget, lookVel, smoothTime, maxSpeed, dt));
-          const tiltSm = smoothDampFloat(tiltCurrent, tiltTarget, { v: tiltVel }, smoothTime, maxSpeed, dt);
-          tiltCurrent = tiltSm.value;
-          tiltVel = tiltSm.v;
+        lookCurrent.copy(smoothDampVec2(lookCurrent, lookTarget, lookVel, smoothTime, maxSpeed, dt));
+        const tiltSm = smoothDampFloat(tiltCurrent, tiltTarget, { v: tiltVel }, smoothTime, maxSpeed, dt);
+        tiltCurrent = tiltSm.value;
+        tiltVel = tiltSm.v;
 
-          const yawSm = smoothDampFloat(yawCurrent, yawTarget, { v: yawVel }, smoothTime, maxSpeed, dt);
-          yawCurrent = yawSm.value;
-          yawVel = yawSm.v;
+        const yawSm = smoothDampFloat(yawCurrent, yawTarget, { v: yawVel }, smoothTime, maxSpeed, dt);
+        yawCurrent = yawSm.value;
+        yawVel = yawSm.v;
 
-          const skew = new THREE.Vector2(lookCurrent.x * skewScale, -lookCurrent.y * yBoost * skewScale);
-          material.uniforms.uSkew.value.set(skew.x, skew.y);
-          material.uniforms.uTilt.value = tiltCurrent * tiltScale;
-          material.uniforms.uYaw.value = Math.max(-0.6, Math.min(0.6, yawCurrent * yawScale));
-          material.uniforms.iTime.value = now / 1000;
-        }
+        const skew = new THREE.Vector2(lookCurrent.x * skewScale, -lookCurrent.y * yBoost * skewScale);
+        material.uniforms.uSkew.value.set(skew.x, skew.y);
+        material.uniforms.uTilt.value = tiltCurrent * tiltScale;
+        material.uniforms.uYaw.value = Math.max(-0.6, Math.min(0.6, yawCurrent * yawScale));
+        material.uniforms.iTime.value = now / 1000;
 
-        renderer.clear(true, true, true);
         renderer.render(scene, camera);
         window.requestAnimationFrame(tick);
       };
@@ -2103,7 +2033,6 @@
 
   renderCartSheet();
   buildMenu();
-  initHeroDither();
   initGridScanBackground();
 })();
 </script>
