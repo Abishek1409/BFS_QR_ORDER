@@ -619,12 +619,212 @@
     padding: 4px;
   }
 
-  .sheet-handle {
-    width: 36px;
-    height: 4px;
-    background: var(--color-border);
-    border-radius: 2px;
-    margin: 0 auto 14px;
+  /* React Bits Stepper Component Styles */
+  .stepper-circle-container {
+    width: 100%;
+    border-radius: var(--radius-lg);
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    overflow: hidden;
+    margin-bottom: 6px;
+  }
+
+  .step-indicator-row {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    padding: 16px 20px 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(18, 23, 34, 0.6);
+  }
+
+  .step-indicator {
+    position: relative;
+    cursor: pointer;
+    outline: none;
+    user-select: none;
+  }
+
+  .step-indicator-inner {
+    display: flex;
+    height: 34px;
+    width: 34px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 13px;
+    background: #181d28;
+    color: #a3a3a3;
+    border: 1.5px solid var(--color-border);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .step-indicator.active .step-indicator-inner {
+    background: #FF9FFC;
+    color: #05080A;
+    border-color: #FF9FFC;
+    transform: scale(1.08);
+    box-shadow: 0 0 14px rgba(255, 159, 252, 0.45);
+  }
+
+  .step-indicator.complete .step-indicator-inner {
+    background: #16A34A;
+    color: #fff;
+    border-color: #16A34A;
+    box-shadow: 0 0 10px rgba(22, 163, 74, 0.4);
+  }
+
+  .step-indicator .active-dot {
+    height: 10px;
+    width: 10px;
+    border-radius: 9999px;
+    background-color: #05080A;
+  }
+
+  .step-connector {
+    position: relative;
+    margin: 0 8px;
+    height: 2px;
+    flex: 1;
+    overflow: hidden;
+    border-radius: 4px;
+    background-color: #2F293A;
+  }
+
+  .step-connector-inner {
+    position: absolute;
+    left: 0;
+    top: 0;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #FF9FFC, #16A34A);
+    transition: width 0.35s ease;
+  }
+
+  .step-connector.complete .step-connector-inner {
+    width: 100%;
+  }
+
+  .step-content-wrapper {
+    position: relative;
+    overflow: hidden;
+    min-height: 210px;
+    padding: 20px 20px 10px;
+  }
+
+  .step-pane {
+    display: none;
+    opacity: 0;
+    transform: translateX(20px);
+    transition: opacity 0.28s ease, transform 0.28s ease;
+  }
+
+  .step-pane.active {
+    display: block;
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .step-pane.slide-left {
+    animation: stepSlideLeft 0.28s forwards;
+  }
+
+  .step-pane.slide-right {
+    animation: stepSlideRight 0.28s forwards;
+  }
+
+  @keyframes stepSlideLeft {
+    from { opacity: 0; transform: translateX(24px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes stepSlideRight {
+    from { opacity: 0; transform: translateX(-24px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .stepper-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 20px 18px;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    background: rgba(18, 23, 34, 0.3);
+  }
+
+  .stepper-btn-back {
+    padding: 10px 20px;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    border: 1px solid var(--color-border);
+    color: var(--color-text-secondary);
+    font-weight: 600;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .stepper-btn-back:hover {
+    color: var(--color-text);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .stepper-btn-back.inactive {
+    opacity: 0.45;
+    pointer-events: none;
+  }
+
+  .stepper-btn-next {
+    padding: 10px 24px;
+    border-radius: 50px;
+    background: linear-gradient(135deg, #FF9FFC 0%, #B86BFF 100%);
+    border: none;
+    color: #05080A;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(255, 159, 252, 0.35);
+    transition: all 0.2s;
+  }
+
+  .stepper-btn-next:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(255, 159, 252, 0.45);
+  }
+
+  .step-review-card {
+    background: var(--color-surface-raised);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: 16px;
+    margin-top: 8px;
+  }
+
+  .step-review-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    margin-bottom: 8px;
+    color: var(--color-text-secondary);
+  }
+
+  .step-review-row span:last-child {
+    color: var(--color-text);
+    font-weight: 600;
+  }
+
+  .step-review-row.total {
+    border-top: 1px dashed var(--color-border);
+    padding-top: 10px;
+    margin-top: 10px;
+    font-size: 16px;
+    font-weight: 700;
+    color: var(--color-text);
+  }
+
+  .step-review-row.total span:last-child {
+    color: var(--color-primary-dark);
   }
 
   /* Option groups */
@@ -1061,50 +1261,90 @@
 <div class="toast" id="toast" role="status"></div>
 
 <!-- Item detail sheet -->
+<!-- Item detail sheet with React Bits Stepper -->
 <div class="sheet" id="itemSheet">
   <div class="sheet-handle"></div>
   <div class="sheet-header">
-    <div class="sheet-title" id="itemSheetTitle">Customize</div>
+    <div class="sheet-title" id="itemSheetTitle">Customize Item</div>
     <button class="sheet-close" id="closeItemSheet">&times;</button>
   </div>
 
-  <div id="juiceOptions">
-    <div class="option-group" id="iceGroup">
-      <div class="option-label">Ice Preference</div>
-      <div class="option-pills">
-        <button class="pill ice" data-type="ice" data-value="With Ice">With Ice</button>
-        <button class="pill ice" data-type="ice" data-value="Without Ice">Without Ice</button>
+  <div class="stepper-circle-container">
+    <!-- Step Indicator Row -->
+    <div class="step-indicator-row" id="stepperIndicators">
+      <!-- Injected by JavaScript -->
+    </div>
+
+    <!-- Step Content Wrapper -->
+    <div class="step-content-wrapper">
+      <!-- Step 1: Preferences / Juice Options -->
+      <div class="step-pane" id="stepPaneOptions">
+        <div id="juiceOptions">
+          <div class="option-group" id="iceGroup">
+            <div class="option-label">❄️ Ice Preference</div>
+            <div class="option-pills">
+              <button class="pill ice" data-type="ice" data-value="With Ice">With Ice</button>
+              <button class="pill ice" data-type="ice" data-value="Without Ice">Without Ice</button>
+            </div>
+          </div>
+
+          <div class="option-group" id="sugarGroup">
+            <div class="option-label">🍯 Sugar Level</div>
+            <div class="option-pills">
+              <button class="pill sugar" data-type="sugar" data-value="Normal">Normal</button>
+              <button class="pill sugar" data-type="sugar" data-value="Less Sugar">Less Sugar</button>
+              <button class="pill sugar" data-type="sugar" data-value="No Sugar">No Sugar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Step 2: Quantity & Notes -->
+      <div class="step-pane" id="stepPaneQuantity">
+        <div class="option-group">
+          <div class="option-label" style="text-align:center;">Quantity</div>
+          <div class="qty-stepper">
+            <button class="qty-btn" id="qtyMinus" type="button">−</button>
+            <div class="qty-value" id="qtyValue">1</div>
+            <button class="qty-btn" id="qtyPlus" type="button">+</button>
+          </div>
+        </div>
+
+        <div class="option-group">
+          <div class="option-label">Special Note (optional)</div>
+          <input type="text" class="note-input" id="noteInput" placeholder="e.g., extra pulp, less ice, takeaway">
+        </div>
+      </div>
+
+      <!-- Step 3: Review & Summary -->
+      <div class="step-pane" id="stepPaneReview">
+        <div class="option-label">Review Your Selection</div>
+        <div class="step-review-card">
+          <div class="step-review-row">
+            <span>Item</span>
+            <span id="reviewItemName">—</span>
+          </div>
+          <div class="step-review-row" id="reviewCustomizationRow">
+            <span>Preferences</span>
+            <span id="reviewCustomization">—</span>
+          </div>
+          <div class="step-review-row">
+            <span>Quantity</span>
+            <span id="reviewQuantity">1</span>
+          </div>
+          <div class="step-review-row total">
+            <span>Item Total</span>
+            <span id="reviewItemTotal">₹0</span>
+          </div>
+        </div>
       </div>
     </div>
 
-    <div class="option-group" id="sugarGroup">
-      <div class="option-label">Sugar Level</div>
-      <div class="option-pills">
-        <button class="pill sugar" data-type="sugar" data-value="Normal">Normal</button>
-        <button class="pill sugar" data-type="sugar" data-value="Less Sugar">Less Sugar</button>
-        <button class="pill sugar" data-type="sugar" data-value="No Sugar">No Sugar</button>
-      </div>
+    <!-- Stepper Footer -->
+    <div class="stepper-footer">
+      <button class="stepper-btn-back" id="stepperPrevBtn" type="button">Back</button>
+      <button class="stepper-btn-next" id="stepperNextBtn" type="button">Continue</button>
     </div>
-
-  </div>
-
-  <div class="option-group">
-    <div class="option-label">Quantity</div>
-    <div class="qty-stepper">
-      <button class="qty-btn" id="qtyMinus">−</button>
-      <div class="qty-value" id="qtyValue">1</div>
-      <button class="qty-btn" id="qtyPlus">+</button>
-    </div>
-  </div>
-
-  <div class="option-group">
-    <div class="option-label">Special Note (optional)</div>
-    <input type="text" class="note-input" id="noteInput" placeholder="e.g., extra pulp, no straw">
-  </div>
-
-  <div class="btn-row">
-    <button class="btn btn-secondary" id="cancelItem">Cancel</button>
-    <button class="btn btn-primary" id="addToCart">Add to Cart</button>
   </div>
 </div>
 
@@ -1780,6 +2020,112 @@
     return div.innerHTML;
   }
 
+  let stepperSteps = [];
+  let currentStepIndex = 0;
+
+  function initStepperForCurrentItem() {
+    if (isJuiceCategory) {
+      stepperSteps = [
+        { id: 'stepPaneOptions', title: 'Preferences' },
+        { id: 'stepPaneQuantity', title: 'Quantity' },
+        { id: 'stepPaneReview', title: 'Review' }
+      ];
+    } else {
+      stepperSteps = [
+        { id: 'stepPaneQuantity', title: 'Quantity' },
+        { id: 'stepPaneReview', title: 'Review' }
+      ];
+    }
+    currentStepIndex = 0;
+    renderStepperUI(0);
+  }
+
+  function renderStepperUI(direction) {
+    const indicatorsContainer = document.getElementById('stepperIndicators');
+    indicatorsContainer.innerHTML = '';
+    const total = stepperSteps.length;
+
+    stepperSteps.forEach((stepObj, idx) => {
+      const stepNumber = idx + 1;
+      const indicator = document.createElement('div');
+      indicator.className = 'step-indicator' + (idx === currentStepIndex ? ' active' : idx < currentStepIndex ? ' complete' : '');
+
+      let innerContent = `<span class="step-number">${stepNumber}</span>`;
+      if (idx === currentStepIndex) {
+        innerContent = `<div class="active-dot"></div>`;
+      } else if (idx < currentStepIndex) {
+        innerContent = `<svg class="check-icon" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24" style="width:14px;height:14px;"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>`;
+      }
+
+      indicator.innerHTML = `<div class="step-indicator-inner">${innerContent}</div>`;
+
+      indicator.addEventListener('click', () => {
+        if (idx < currentStepIndex) {
+          const dir = idx > currentStepIndex ? 1 : -1;
+          currentStepIndex = idx;
+          renderStepperUI(dir);
+        }
+      });
+
+      indicatorsContainer.appendChild(indicator);
+
+      if (idx < total - 1) {
+        const connector = document.createElement('div');
+        connector.className = 'step-connector' + (idx < currentStepIndex ? ' complete' : '');
+        connector.innerHTML = `<div class="step-connector-inner"></div>`;
+        indicatorsContainer.appendChild(connector);
+      }
+    });
+
+    const allPanes = ['stepPaneOptions', 'stepPaneQuantity', 'stepPaneReview'];
+    allPanes.forEach(paneId => {
+      const el = document.getElementById(paneId);
+      if (el) {
+        el.classList.remove('active', 'slide-left', 'slide-right');
+      }
+    });
+
+    const activeStepId = stepperSteps[currentStepIndex].id;
+    const activePane = document.getElementById(activeStepId);
+    if (activePane) {
+      activePane.classList.add('active');
+      if (direction > 0) activePane.classList.add('slide-left');
+      else if (direction < 0) activePane.classList.add('slide-right');
+    }
+
+    if (activeStepId === 'stepPaneReview') {
+      document.getElementById('reviewItemName').textContent = currentItem ? currentItem.name : '';
+      const customRow = document.getElementById('reviewCustomizationRow');
+      if (isJuiceCategory && (selections.ice || selections.sugar)) {
+        const opts = [];
+        if (selections.ice) opts.push(selections.ice);
+        if (selections.sugar) opts.push(selections.sugar);
+        document.getElementById('reviewCustomization').textContent = opts.join(' · ');
+        customRow.style.display = 'flex';
+      } else {
+        customRow.style.display = 'none';
+      }
+      document.getElementById('reviewQuantity').textContent = qty + (note ? ` (Note: "${note}")` : '');
+      document.getElementById('reviewItemTotal').textContent = formatPrice(currentItem ? currentItem.price * qty : 0);
+    }
+
+    const prevBtn = document.getElementById('stepperPrevBtn');
+    const nextBtn = document.getElementById('stepperNextBtn');
+
+    if (currentStepIndex === 0) {
+      prevBtn.textContent = 'Cancel';
+    } else {
+      prevBtn.textContent = 'Back';
+    }
+
+    const isLast = currentStepIndex === total - 1;
+    if (isLast) {
+      nextBtn.textContent = 'Add to Cart · ' + formatPrice(currentItem ? currentItem.price * qty : 0);
+    } else {
+      nextBtn.textContent = 'Continue →';
+    }
+  }
+
   function openItemSheet(item, cat) {
     currentItem = { ...item, categoryName: cat.name };
     isJuiceCategory = isDrinkCategoryName(cat.name);
@@ -1790,22 +2136,10 @@
     document.getElementById('itemSheetTitle').textContent = item.name;
     document.getElementById('noteInput').value = '';
     document.getElementById('qtyValue').textContent = '1';
-    updateAddToCartLabel();
+    document.querySelectorAll('#juiceOptions .pill').forEach(p => p.classList.remove('selected'));
 
-    const juiceOptions = document.getElementById('juiceOptions');
-    if (isJuiceCategory) {
-      juiceOptions.classList.remove('hidden');
-      document.querySelectorAll('#juiceOptions .pill').forEach(p => p.classList.remove('selected'));
-    } else {
-      juiceOptions.classList.add('hidden');
-    }
-
+    initStepperForCurrentItem();
     openSheet(itemSheet);
-  }
-
-  function updateAddToCartLabel() {
-    if (!currentItem) return;
-    addToCart.textContent = 'Add to Cart · ' + formatPrice(currentItem.price * qty);
   }
 
   function closeSheet(sheet) {
@@ -1831,7 +2165,6 @@
       document.querySelectorAll(`#juiceOptions .pill[data-type="${type}"]`).forEach(p => p.classList.remove('selected'));
       pill.classList.add('selected');
       selections[type] = pill.dataset.value;
-      updateAddToCartLabel();
     });
   });
 
@@ -1839,56 +2172,86 @@
     if (qty > 1) {
       qty--;
       document.getElementById('qtyValue').textContent = qty;
-      updateAddToCartLabel();
+      const nextBtn = document.getElementById('stepperNextBtn');
+      if (currentStepIndex === stepperSteps.length - 1 && currentItem) {
+        nextBtn.textContent = 'Add to Cart · ' + formatPrice(currentItem.price * qty);
+        document.getElementById('reviewQuantity').textContent = qty + (note ? ` (Note: "${note}")` : '');
+        document.getElementById('reviewItemTotal').textContent = formatPrice(currentItem.price * qty);
+      }
     }
   });
 
   document.getElementById('qtyPlus').addEventListener('click', () => {
     qty++;
     document.getElementById('qtyValue').textContent = qty;
-    updateAddToCartLabel();
+    const nextBtn = document.getElementById('stepperNextBtn');
+    if (currentStepIndex === stepperSteps.length - 1 && currentItem) {
+      nextBtn.textContent = 'Add to Cart · ' + formatPrice(currentItem.price * qty);
+      document.getElementById('reviewQuantity').textContent = qty + (note ? ` (Note: "${note}")` : '');
+      document.getElementById('reviewItemTotal').textContent = formatPrice(currentItem.price * qty);
+    }
   });
 
-  document.getElementById('cancelItem').addEventListener('click', () => closeSheet(itemSheet));
+  document.getElementById('stepperPrevBtn').addEventListener('click', () => {
+    if (currentStepIndex > 0) {
+      currentStepIndex--;
+      renderStepperUI(-1);
+    } else {
+      closeSheet(itemSheet);
+    }
+  });
 
-  addToCart.addEventListener('click', () => {
+  document.getElementById('stepperNextBtn').addEventListener('click', () => {
     if (!currentItem) return;
 
-    if (isJuiceCategory && (!selections.ice || !selections.sugar)) {
-      alert('Please choose your ice preference and sugar level.');
-      return;
-    }
-
-    let unitPrice = currentItem.price;
-    let name = currentItem.name;
-
-    if (isJuiceCategory) {
-      const options = [];
-      if (selections.ice) options.push(selections.ice);
-      if (selections.sugar) options.push(selections.sugar);
-      if (options.length) {
-        name += ' (' + options.join(', ') + ')';
+    const activeStepId = stepperSteps[currentStepIndex].id;
+    if (activeStepId === 'stepPaneOptions') {
+      if (isJuiceCategory && (!selections.ice || !selections.sugar)) {
+        alert('Please choose your ice preference and sugar level.');
+        return;
       }
     }
 
-    note = document.getElementById('noteInput').value.trim();
-    if (note) {
-      name += ' — ' + note;
+    if (activeStepId === 'stepPaneQuantity') {
+      note = document.getElementById('noteInput').value.trim();
     }
 
-    const line = {
-      name: name,
-      price: unitPrice,
-      qty: qty
-    };
+    const total = stepperSteps.length;
+    if (currentStepIndex < total - 1) {
+      currentStepIndex++;
+      renderStepperUI(1);
+    } else {
+      let unitPrice = currentItem.price;
+      let name = currentItem.name;
 
-    cart.push(line);
-    updateCartBar();
-    showToast(qty + ' × ' + currentItem.name + ' added');
-    cartBar.classList.remove('bump');
-    void cartBar.offsetWidth;
-    cartBar.classList.add('bump');
-    closeSheet(itemSheet);
+      if (isJuiceCategory) {
+        const options = [];
+        if (selections.ice) options.push(selections.ice);
+        if (selections.sugar) options.push(selections.sugar);
+        if (options.length) {
+          name += ' (' + options.join(', ') + ')';
+        }
+      }
+
+      note = document.getElementById('noteInput').value.trim();
+      if (note) {
+        name += ' — ' + note;
+      }
+
+      const line = {
+        name: name,
+        price: unitPrice,
+        qty: qty
+      };
+
+      cart.push(line);
+      updateCartBar();
+      showToast(qty + ' × ' + currentItem.name + ' added');
+      cartBar.classList.remove('bump');
+      void cartBar.offsetWidth;
+      cartBar.classList.add('bump');
+      closeSheet(itemSheet);
+    }
   });
 
   function showToast(message) {
