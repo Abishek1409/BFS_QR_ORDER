@@ -60,6 +60,16 @@
     opacity: 0.9;
   }
 
+  #gridScanFallback {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    opacity: 0.9;
+  }
+
   .hero {
     position: relative;
     z-index: 1;
@@ -210,83 +220,7 @@
   .container {
     max-width: none;
     padding: 0;
-    position: relative;
     z-index: 1;
-  }
-
-  .category-header {
-    font-size: 13px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: var(--color-text-secondary);
-    margin: 26px 0 11px;
-    padding-left: 4px;
-  }
-
-  .menu-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 14px;
-  }
-
-  .item-card {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius-md);
-    padding: 17px;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
-    cursor: pointer;
-    transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-    box-shadow: var(--shadow-sm);
-    min-height: 146px;
-    position: relative;
-    overflow: hidden;
-  }
-
-  .item-card:active {
-    transform: scale(0.97);
-    border-color: var(--color-primary);
-  }
-
-  .item-card:hover {
-    transform: translateY(-3px);
-    border-color: rgba(22, 163, 74, 0.55);
-    box-shadow: 0 12px 24px rgba(16, 24, 40, 0.12);
-  }
-
-  .item-name {
-    font-size: 15px;
-    font-weight: 600;
-    line-height: 1.3;
-    color: var(--color-text);
-  }
-
-  .item-price {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--color-primary);
-    margin-top: auto;
-  }
-
-  .item-emoji {
-    font-size: 24px;
-    line-height: 1;
-  }
-
-  .item-badge {
-    position: absolute;
-    top: 12px;
-    right: 12px;
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.4px;
-    padding: 4px 9px;
-    border-radius: 20px;
-    color: var(--color-primary-dark);
   }
 
 .item-badge.juice { background: rgba(22, 163, 74, 0.2); color: #86EFAC; }
@@ -958,6 +892,7 @@
 <body>
 
 <canvas id="gridScanBackground" aria-hidden="true"></canvas>
+<canvas id="gridScanFallback" aria-hidden="true"></canvas>
 
 <header class="page-header">
   <div class="brand">
@@ -1288,16 +1223,86 @@
     draw(0);
   }
 
+  function initGridScanCanvasFallback(canvas, reduceMotion) {
+    const context = canvas.getContext('2d');
+    if (!context) return;
+    let width = 0;
+    let height = 0;
+    let pointerX = 0;
+    let pointerY = 0;
+
+    function resize() {
+      const scale = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      context.setTransform(scale, 0, 0, scale, 0, 0);
+    }
+
+    function draw(now) {
+      const seconds = reduceMotion ? 1 : now * 0.001;
+      const horizon = height * 0.48 + pointerY * 10;
+      const centerX = width * 0.5 + pointerX * 14;
+      const spacing = Math.max(28, Math.min(width, height) * 0.1);
+      context.clearRect(0, 0, width, height);
+      context.fillStyle = '#05080A';
+      context.fillRect(0, 0, width, height);
+      context.lineWidth = 1;
+      context.strokeStyle = '#2F293A';
+      context.globalAlpha = 0.95;
+
+      for (let x = -width; x <= width * 2; x += spacing) {
+        context.beginPath(); context.moveTo(centerX, horizon); context.lineTo(x, 0); context.stroke();
+        context.beginPath(); context.moveTo(centerX, horizon); context.lineTo(x, height); context.stroke();
+      }
+
+      const travel = reduceMotion ? 0.5 : (seconds * 0.55) % 1;
+      for (let index = 0; index < 18; index++) {
+        const depth = (index + travel) / 18;
+        const distance = Math.pow(depth, 2.1) * Math.max(width, height) * 1.25;
+        for (const direction of [-1, 1]) {
+          const y = horizon + direction * distance;
+          if (y < -height || y > height * 2) continue;
+          context.beginPath(); context.moveTo(0, y); context.lineTo(width, y); context.stroke();
+        }
+      }
+
+      const glow = context.createRadialGradient(centerX, horizon, 0, centerX, horizon, width * 0.48);
+      glow.addColorStop(0, 'rgba(255, 159, 252, 0.28)');
+      glow.addColorStop(0.18, 'rgba(255, 159, 252, 0.08)');
+      glow.addColorStop(1, 'rgba(255, 159, 252, 0)');
+      context.fillStyle = glow;
+      context.fillRect(0, 0, width, height);
+      context.strokeStyle = '#FF9FFC';
+      context.shadowColor = '#FF9FFC';
+      context.shadowBlur = 14;
+      context.beginPath(); context.moveTo(0, horizon); context.lineTo(width, horizon); context.stroke();
+      context.shadowBlur = 0;
+      context.globalAlpha = 1;
+      if (!reduceMotion) window.requestAnimationFrame(draw);
+    }
+
+    window.addEventListener('resize', resize);
+    window.addEventListener('pointermove', event => {
+      pointerX = (event.clientX / width) * 2 - 1;
+      pointerY = -((event.clientY / height) * 2 - 1);
+    }, { passive: true });
+    resize();
+    draw(0);
+  }
+
   function initGridScanBackground() {
     const canvas = document.getElementById('gridScanBackground');
     if (!canvas) return;
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    initGridScanCanvasFallback(canvas, reduceMotion);
+    return;
     const context = canvas.getContext('webgl', { alpha: false, antialias: true });
     if (!context) return;
-    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const vertexSource = 'attribute vec2 position; void main() { gl_Position = vec4(position, 0.0, 1.0); }';
     const fragmentSource = `
       precision highp float;
-      #extension GL_OES_standard_derivatives : enable
       uniform vec2 resolution;
       uniform float time;
       uniform vec2 pointer;
@@ -1306,49 +1311,27 @@
 
       float gridLine(vec2 uv) {
         vec2 distanceToLine = abs(fract(uv) - 0.5);
-        vec2 width = fwidth(uv) * 1.25;
-        return max(1.0 - smoothstep(0.0, width.x, distanceToLine.x),
-                   1.0 - smoothstep(0.0, width.y, distanceToLine.y));
+        vec2 line = 1.0 - smoothstep(vec2(0.0), vec2(0.035), distanceToLine);
+        return max(line.x, line.y);
       }
 
       void main() {
         vec2 p = (2.0 * gl_FragCoord.xy - resolution) / resolution.y;
-        vec2 look = pointer * 0.12;
-        vec3 rayOrigin = vec3(look.x, look.y, 0.0);
-        vec3 rayDirection = normalize(vec3(p.x - look.x, p.y - look.y, 1.8));
-        float nearest = 1e6;
-        vec3 hit = vec3(0.0);
-        float surface = 0.0;
-
-        for (int i = 0; i < 4; i++) {
-          float isVertical = float(i < 2);
-          float plane = (i == 0) ? -0.62 : (i == 1) ? 0.62 : (i == 2) ? -0.38 : 0.38;
-          float originAxis = isVertical > 0.5 ? rayOrigin.x : rayOrigin.y;
-          float directionAxis = isVertical > 0.5 ? rayDirection.x : rayDirection.y;
-          float travel = (plane - originAxis) / directionAxis;
-          vec3 candidate = rayOrigin + rayDirection * travel;
-          if (travel > 0.0 && candidate.z < nearest && candidate.z > 0.03) {
-            nearest = candidate.z;
-            hit = candidate;
-            surface = isVertical;
-          }
-        }
-
-        float depth = max(0.05, hit.z);
-        vec2 gridUv = surface > 0.5 ? hit.yz : hit.xz;
-        gridUv /= 0.1;
-        gridUv += vec2(sin(gridUv.y * 2.7 + time * 1.8), cos(gridUv.x * 2.3 - time * 1.6)) * 0.015;
-        float lines = gridLine(gridUv);
-        float fade = exp(-depth * 1.65);
-
-        float cycle = 4.0;
-        float phase = mod(time, cycle) / cycle;
-        phase = phase < 0.5 ? phase * 2.0 : 2.0 - phase * 2.0;
-        float scanDepth = phase * 2.2;
-        float scanBand = exp(-pow(abs(depth - scanDepth) / 0.12, 2.0));
-        float aura = exp(-pow(abs(depth - scanDepth) / 0.32, 2.0)) * 0.26;
-        float tunnelGlow = exp(-length(p - vec2(0.0, 0.0)) * 1.3) * 0.08;
-        vec3 color = gridColor * lines * fade + scanColor * (scanBand * 0.4 + aura + tunnelGlow);
+        p += pointer * 0.04;
+        float horizon = 0.12;
+        float depth = abs(1.0 / max(0.08, abs(p.y - horizon)));
+        float horizontalDepth = abs(1.0 / max(0.08, abs(p.y + horizon)));
+        vec2 floorUv = vec2(p.x * depth * 1.15, depth * 0.28 + time * 0.18);
+        vec2 ceilingUv = vec2(p.x * horizontalDepth * 1.15, horizontalDepth * 0.28 - time * 0.18);
+        float lines = max(gridLine(floorUv), gridLine(ceilingUv));
+        float fade = min(1.0, 0.18 + 1.8 / (depth + 1.0));
+        float cycle = mod(time, 4.0) / 4.0;
+        float phase = cycle < 0.5 ? cycle * 2.0 : 2.0 - cycle * 2.0;
+        float scanDepth = 1.0 + phase * 9.0;
+        float scanBand = exp(-pow(abs(depth - scanDepth) / 0.65, 2.0));
+        float aura = exp(-pow(abs(depth - scanDepth) / 1.8, 2.0)) * 0.32;
+        float tunnelGlow = exp(-length(p) * 1.4) * 0.08;
+        vec3 color = gridColor * lines * fade + scanColor * (scanBand * 0.52 + aura + tunnelGlow);
         float noise = fract(sin(dot(gl_FragCoord.xy + time * 13.0, vec2(12.9898, 78.233))) * 43758.5453);
         color += (noise - 0.5) * 0.01;
         gl_FragColor = vec4(color, 1.0);
@@ -1360,6 +1343,7 @@
       context.shaderSource(shader, source);
       context.compileShader(shader);
       if (!context.getShaderParameter(shader, context.COMPILE_STATUS)) {
+        console.error('GridScan shader error:', context.getShaderInfoLog(shader));
         context.deleteShader(shader);
         return null;
       }
@@ -1373,7 +1357,10 @@
     context.attachShader(program, vertexShader);
     context.attachShader(program, fragmentShader);
     context.linkProgram(program);
-    if (!context.getProgramParameter(program, context.LINK_STATUS)) return;
+    if (!context.getProgramParameter(program, context.LINK_STATUS)) {
+      console.error('GridScan program error:', context.getProgramInfoLog(program));
+      return;
+    }
 
     const buffer = context.createBuffer();
     context.bindBuffer(context.ARRAY_BUFFER, buffer);
@@ -1387,25 +1374,58 @@
 
     function resize() {
       const scale = Math.min(window.devicePixelRatio || 1, 2);
-      canvas.width = window.innerWidth * scale;
-      canvas.height = window.innerHeight * scale;
-      context.viewport(0, 0, canvas.width, canvas.height);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      canvas.width = width * scale;
+      canvas.height = height * scale;
+      context.setTransform(scale, 0, 0, scale, 0, 0);
     }
 
     function onPointerMove(event) {
-      pointerX = (event.clientX / window.innerWidth) * 2 - 1;
-      pointerY = -((event.clientY / window.innerHeight) * 2 - 1);
+      pointerX = (event.clientX / width) * 2 - 1;
+      pointerY = -((event.clientY / height) * 2 - 1);
     }
 
     function draw(now) {
-      context.useProgram(program);
-      context.bindBuffer(context.ARRAY_BUFFER, buffer);
-      context.enableVertexAttribArray(position);
-      context.vertexAttribPointer(position, 2, context.FLOAT, false, 0, 0);
-      context.uniform2f(resolution, canvas.width, canvas.height);
-      context.uniform1f(time, reduceMotion ? 1.0 : now * 0.001);
-      context.uniform2f(pointer, pointerX, pointerY);
-      context.drawArrays(context.TRIANGLES, 0, 6);
+      const seconds = reduceMotion ? 1 : now * 0.001;
+      const horizon = height * 0.48 + pointerY * 10;
+      const centerX = width * 0.5 + pointerX * 14;
+      const spacing = Math.max(28, Math.min(width, height) * 0.1);
+      context.clearRect(0, 0, width, height);
+      context.fillStyle = '#05080A';
+      context.fillRect(0, 0, width, height);
+      context.lineWidth = 1;
+      context.strokeStyle = '#2F293A';
+      context.globalAlpha = 0.95;
+
+      for (let x = -width; x <= width * 2; x += spacing) {
+        context.beginPath(); context.moveTo(centerX, horizon); context.lineTo(x, 0); context.stroke();
+        context.beginPath(); context.moveTo(centerX, horizon); context.lineTo(x, height); context.stroke();
+      }
+
+      const travel = reduceMotion ? 0.5 : (seconds * 0.55) % 1;
+      for (let index = 0; index < 18; index++) {
+        const depth = (index + travel) / 18;
+        const distance = Math.pow(depth, 2.1) * Math.max(width, height) * 1.25;
+        for (const direction of [-1, 1]) {
+          const y = horizon + direction * distance;
+          if (y < -height || y > height * 2) continue;
+          context.beginPath(); context.moveTo(0, y); context.lineTo(width, y); context.stroke();
+        }
+      }
+
+      const glow = context.createRadialGradient(centerX, horizon, 0, centerX, horizon, width * 0.48);
+      glow.addColorStop(0, 'rgba(255, 159, 252, 0.28)');
+      glow.addColorStop(0.18, 'rgba(255, 159, 252, 0.08)');
+      glow.addColorStop(1, 'rgba(255, 159, 252, 0)');
+      context.fillStyle = glow;
+      context.fillRect(0, 0, width, height);
+      context.strokeStyle = '#FF9FFC';
+      context.shadowColor = '#FF9FFC';
+      context.shadowBlur = 14;
+      context.beginPath(); context.moveTo(0, horizon); context.lineTo(width, horizon); context.stroke();
+      context.shadowBlur = 0;
+      context.globalAlpha = 1;
       if (!reduceMotion) window.requestAnimationFrame(draw);
     }
 
