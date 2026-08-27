@@ -1097,6 +1097,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script>
 (function() {
   'use strict';
@@ -1291,6 +1292,95 @@
     draw(0);
   }
 
+  function initGridScanThree(canvas, reduceMotion) {
+    if (!window.THREE) return false;
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color('#05080A');
+    const camera = new THREE.PerspectiveCamera(72, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 0, 3.2);
+    const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight, false);
+
+    const tunnel = new THREE.Group();
+    scene.add(tunnel);
+    const gridMaterial = new THREE.LineBasicMaterial({ color: '#2F293A', transparent: true, opacity: 0.9 });
+    const scanMaterial = new THREE.LineBasicMaterial({ color: '#FF9FFC', transparent: true, opacity: 0.9 });
+    const roomWidth = 18;
+    const roomHeight = 11;
+    const tunnelLength = 38;
+    const gridSpacing = 2.4;
+
+    function addGridPlane(axis, fixed, horizontal, vertical) {
+      const points = [];
+      for (let index = -horizontal; index <= horizontal; index++) {
+        const across = index * gridSpacing;
+        points.push(...(axis === 'floor'
+          ? [-roomWidth, 0, fixed, roomWidth, 0, fixed]
+          : axis === 'ceiling'
+            ? [-roomWidth, roomHeight, fixed, roomWidth, roomHeight, fixed]
+            : [fixed, 0, across, fixed, roomHeight, across]));
+      }
+      for (let index = 0; index <= vertical; index++) {
+        const depth = -index * gridSpacing;
+        points.push(...(axis === 'floor'
+          ? [-roomWidth, 0, depth, roomWidth, 0, depth]
+          : axis === 'ceiling'
+            ? [-roomWidth, roomHeight, depth, roomWidth, roomHeight, depth]
+            : [fixed, 0, depth, fixed, roomHeight, depth]));
+      }
+      const geometry = new THREE.BufferGeometry();
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(points, 3));
+      tunnel.add(new THREE.LineSegments(geometry, gridMaterial));
+    }
+
+    addGridPlane('floor', 0, 8, 16);
+    addGridPlane('ceiling', 0, 8, 16);
+    addGridPlane('wall', -roomWidth, 8, 16);
+    addGridPlane('wall', roomWidth, 8, 16);
+
+    const scanGeometry = new THREE.BufferGeometry();
+    const scanPoints = [];
+    for (let x = -roomWidth; x <= roomWidth; x += gridSpacing) {
+      scanPoints.push(x, 0, 0, x, 0, -0.8, x, roomHeight, 0, x, roomHeight, -0.8);
+    }
+    scanGeometry.setAttribute('position', new THREE.Float32BufferAttribute(scanPoints, 3));
+    const scanPlane = new THREE.LineSegments(scanGeometry, scanMaterial);
+    tunnel.add(scanPlane);
+
+    let pointerX = 0;
+    let pointerY = 0;
+    let targetX = 0;
+    let targetY = 0;
+    const onPointerMove = event => {
+      targetX = (event.clientX / window.innerWidth) * 2 - 1;
+      targetY = -((event.clientY / window.innerHeight) * 2 - 1);
+    };
+    const onResize = () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight, false);
+    };
+    window.addEventListener('pointermove', onPointerMove, { passive: true });
+    window.addEventListener('resize', onResize);
+
+    function tick(now) {
+      const seconds = now * 0.001;
+      pointerX += (targetX - pointerX) * 0.04;
+      pointerY += (targetY - pointerY) * 0.04;
+      camera.position.x = pointerX * 0.7;
+      camera.position.y = pointerY * 0.45;
+      camera.lookAt(pointerX * 0.25, roomHeight * 0.5 + pointerY * 0.2, -12);
+      const phase = reduceMotion ? 0.5 : (Math.sin(seconds * 1.35) + 1) * 0.5;
+      scanPlane.position.z = -phase * tunnelLength;
+      scanPlane.material.opacity = 0.45 + Math.sin(seconds * 2) * 0.25;
+      renderer.render(scene, camera);
+      if (!reduceMotion) window.requestAnimationFrame(tick);
+    }
+    tick(0);
+    return true;
+  }
+
   function initGridScanCanvasFallback(canvas, reduceMotion) {
     const context = canvas.getContext('2d');
     if (!context) return;
@@ -1310,44 +1400,46 @@
 
     function draw(now) {
       const seconds = reduceMotion ? 1 : now * 0.001;
-      const horizon = height * 0.48 + pointerY * 10;
-      const centerX = width * 0.5 + pointerX * 14;
-      const spacing = Math.max(28, Math.min(width, height) * 0.1);
+      const centerX = width * 0.5 + pointerX * 18;
+      const horizon = height * 0.48 + pointerY * 12;
+      const roomTop = height * 0.06;
+      const roomBottom = height * 0.96;
+      const roomLeft = width * 0.02;
+      const roomRight = width * 0.98;
       context.clearRect(0, 0, width, height);
       context.fillStyle = '#05080A';
       context.fillRect(0, 0, width, height);
       context.lineWidth = 1;
       context.strokeStyle = '#2F293A';
-      context.globalAlpha = 0.95;
+      context.globalAlpha = 0.88;
 
-      for (let x = -width; x <= width * 2; x += spacing) {
-        context.beginPath(); context.moveTo(centerX, horizon); context.lineTo(x, 0); context.stroke();
-        context.beginPath(); context.moveTo(centerX, horizon); context.lineTo(x, height); context.stroke();
+      for (let index = -12; index <= 12; index++) {
+        const fraction = index / 12;
+        const topX = centerX + fraction * width * 0.95;
+        const bottomX = centerX + fraction * width * 0.95;
+        context.beginPath(); context.moveTo(centerX, horizon); context.lineTo(topX, roomTop); context.stroke();
+        context.beginPath(); context.moveTo(centerX, horizon); context.lineTo(bottomX, roomBottom); context.stroke();
       }
 
-      const travel = reduceMotion ? 0.5 : (seconds * 0.55) % 1;
-      for (let index = 0; index < 18; index++) {
-        const depth = (index + travel) / 18;
-        const distance = Math.pow(depth, 2.1) * Math.max(width, height) * 1.25;
-        for (const direction of [-1, 1]) {
-          const y = horizon + direction * distance;
-          if (y < -height || y > height * 2) continue;
-          context.beginPath(); context.moveTo(0, y); context.lineTo(width, y); context.stroke();
-        }
+      const travel = reduceMotion ? 0.5 : (Math.sin(seconds * 1.25) + 1) * 0.5;
+      for (let index = 1; index <= 18; index++) {
+        const depth = index / 18;
+        const perspective = Math.pow(depth, 2.2);
+        const topY = horizon + (roomTop - horizon) * perspective;
+        const bottomY = horizon + (roomBottom - horizon) * perspective;
+        context.beginPath(); context.moveTo(roomLeft * perspective + centerX * (1 - perspective), topY); context.lineTo(width - (width - roomRight) * perspective - centerX * (1 - perspective), topY); context.stroke();
+        context.beginPath(); context.moveTo(roomLeft * perspective + centerX * (1 - perspective), bottomY); context.lineTo(width - (width - roomRight) * perspective - centerX * (1 - perspective), bottomY); context.stroke();
       }
 
-      const scanDistance = Math.pow(travel, 2.1) * Math.max(width, height) * 1.25;
+      const scanPerspective = Math.pow(travel, 2.2);
+      const scanTop = horizon + (roomTop - horizon) * scanPerspective;
+      const scanBottom = horizon + (roomBottom - horizon) * scanPerspective;
       context.strokeStyle = '#FF9FFC';
       context.shadowColor = '#FF9FFC';
-      context.shadowBlur = 18;
-      context.globalAlpha = 0.8;
-      for (const direction of [-1, 1]) {
-        const scanY = horizon + direction * scanDistance;
-        context.beginPath();
-        context.moveTo(0, scanY);
-        context.lineTo(width, scanY);
-        context.stroke();
-      }
+      context.shadowBlur = 20;
+      context.globalAlpha = 0.9;
+      context.beginPath(); context.moveTo(roomLeft * scanPerspective + centerX * (1 - scanPerspective), scanTop); context.lineTo(width - (width - roomRight) * scanPerspective - centerX * (1 - scanPerspective), scanTop); context.stroke();
+      context.beginPath(); context.moveTo(roomLeft * scanPerspective + centerX * (1 - scanPerspective), scanBottom); context.lineTo(width - (width - roomRight) * scanPerspective - centerX * (1 - scanPerspective), scanBottom); context.stroke();
       context.shadowBlur = 0;
 
       const glow = context.createRadialGradient(centerX, horizon, 0, centerX, horizon, width * 0.48);
@@ -1373,6 +1465,7 @@
     const canvas = document.getElementById('gridScanBackground');
     if (!canvas) return;
     const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (initGridScanThree(canvas, reduceMotion)) return;
     initGridScanCanvasFallback(canvas, reduceMotion);
     return;
     const context = canvas.getContext('webgl', { alpha: false, antialias: true });
