@@ -899,6 +899,14 @@
     margin-bottom: 20px;
   }
 
+  .confirm-bill-status {
+    min-height: 22px;
+    margin-bottom: 20px;
+    color: var(--color-primary-dark);
+    font-size: 15px;
+    font-weight: 700;
+  }
+
   .confirm-action {
     max-width: 240px;
   }
@@ -1092,6 +1100,7 @@
   </div>
   <div class="confirm-title">Order placed!</div>
   <div class="confirm-body" id="confirmBody">Table — your order is with the kitchen.<br>You can close this tab now.</div>
+  <div class="confirm-bill-status" id="confirmBillStatus">Waiting for confirmation from the counter...</div>
   <button class="btn btn-primary confirm-action" id="orderMore">Order More</button>
 </div>
 
@@ -1131,6 +1140,7 @@
   const cartSheet = document.getElementById('cartSheet');
   const confirmScreen = document.getElementById('confirmScreen');
   const confirmBody = document.getElementById('confirmBody');
+  const confirmBillStatus = document.getElementById('confirmBillStatus');
   const orderMore = document.getElementById('orderMore');
   const addToCart = document.getElementById('addToCart');
   const toast = document.getElementById('toast');
@@ -1186,6 +1196,7 @@
   let note = '';
   let isJuiceCategory = false;
   let searchQuery = '';
+  let orderStatusRef = null;
 
   tableBadge.textContent = table ? 'Table ' + table : 'Table —';
 
@@ -1807,6 +1818,22 @@
     check.replaceWith(freshCheck);
   }
 
+  function watchForBillNumber(orderId) {
+    if (orderStatusRef) {
+      orderStatusRef.off();
+    }
+    orderStatusRef = database.ref('orderStatus/' + orderId);
+    orderStatusRef.on('value', snapshot => {
+      const status = snapshot.val();
+      if (!status || !Object.prototype.hasOwnProperty.call(status, 'billNo')) return;
+
+      confirmBillStatus.textContent = 'Your Bill No: #' + String(status.billNo).padStart(3, '0');
+      orderStatusRef.off();
+      orderStatusRef.remove().catch(() => {});
+      orderStatusRef = null;
+    });
+  }
+
   searchInput.addEventListener('input', () => {
     searchQuery = searchInput.value.trim().toLowerCase();
     searchClear.classList.toggle('hidden', !searchQuery);
@@ -1884,7 +1911,8 @@
     btn.textContent = 'Placing order…';
 
     try {
-      await database.ref('orders').push({
+      const orderRef = database.ref('orders').push();
+      await orderRef.set({
         table: table,
         items: cart,
         status: 'pending',
@@ -1896,8 +1924,10 @@
       cart = [];
 
       confirmBody.innerHTML = `Table <strong>${escapeHtml(table)}</strong> — your order is with the kitchen.<br>You can close this tab now.`;
+      confirmBillStatus.textContent = 'Waiting for confirmation from the counter...';
       replayConfirmationCheck();
       confirmScreen.classList.remove('hidden');
+      watchForBillNumber(orderRef.key);
     } catch (err) {
       alert('Could not place order. Please check your WiFi and try again.');
       btn.disabled = false;
@@ -1906,6 +1936,10 @@
   });
 
   orderMore.addEventListener('click', () => {
+    if (orderStatusRef) {
+      orderStatusRef.off();
+      orderStatusRef = null;
+    }
     confirmScreen.classList.add('hidden');
     buildMenu();
     window.scrollTo(0, 0);
