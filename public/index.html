@@ -1100,6 +1100,20 @@
     margin-bottom: 16px;
   }
 
+  .confirm-loading {
+    width: 48px;
+    height: 48px;
+    border: 4px solid var(--color-border);
+    border-top-color: var(--color-primary);
+    border-radius: 50%;
+    animation: confirmSpin 0.8s linear infinite;
+    margin-bottom: 16px;
+  }
+
+  @keyframes confirmSpin {
+    to { transform: rotate(360deg); }
+  }
+
   .confirm-check {
     width: 76px;
     height: 76px;
@@ -1368,13 +1382,14 @@
 <!-- Confirmation screen -->
 <div class="confirm-screen hidden" id="confirmScreen">
   <div class="confirm-bill-status" id="confirmBillStatus">Waiting for confirmation from the counter...</div>
-  <div class="confirm-emoji" aria-hidden="true">
+  <div class="confirm-loading" id="confirmLoading" aria-hidden="true"></div>
+  <div class="confirm-emoji hidden" id="confirmEmoji" aria-hidden="true">
     <svg class="confirm-check" viewBox="0 0 76 76">
       <circle cx="38" cy="38" r="34" stroke-width="4"></circle>
       <path d="M21 39.5 32.5 51 56 27.5" stroke-width="4"></path>
     </svg>
   </div>
-  <div class="confirm-title">Order placed!</div>
+  <div class="confirm-title" id="confirmTitle">Order placed!</div>
   <div class="confirm-body" id="confirmBody">Table — your order is with the kitchen.<br>You can close this tab now.</div>
   <button class="btn btn-primary confirm-action" id="orderMore">Order More</button>
 </div>
@@ -1414,6 +1429,9 @@
   const confirmScreen = document.getElementById('confirmScreen');
   const confirmBody = document.getElementById('confirmBody');
   const confirmBillStatus = document.getElementById('confirmBillStatus');
+  const confirmLoading = document.getElementById('confirmLoading');
+  const confirmEmoji = document.getElementById('confirmEmoji');
+  const confirmTitle = document.getElementById('confirmTitle');
   const orderMore = document.getElementById('orderMore');
   const addToCart = document.getElementById('addToCart');
   const toast = document.getElementById('toast');
@@ -2278,9 +2296,10 @@
   }
 
   function replayConfirmationCheck() {
-    const check = document.querySelector('.confirm-check');
-    const freshCheck = check.cloneNode(true);
-    check.replaceWith(freshCheck);
+    confirmLoading.classList.remove('hidden');
+    confirmEmoji.classList.add('hidden');
+    confirmTitle.textContent = 'Order placed!';
+    confirmBillStatus.textContent = 'Waiting for confirmation from the counter...';
   }
 
   function watchForBillNumber(orderId) {
@@ -2293,6 +2312,9 @@
       if (!status || !Object.prototype.hasOwnProperty.call(status, 'billNo')) return;
 
       confirmBillStatus.textContent = 'Your Bill No: #' + String(status.billNo).padStart(3, '0');
+      confirmLoading.classList.add('hidden');
+      confirmEmoji.classList.remove('hidden');
+      confirmTitle.textContent = 'Order confirmed!';
       orderStatusRef.off();
       orderStatusRef.remove().catch(() => {});
       orderStatusRef = null;
@@ -2389,7 +2411,9 @@
 
       confirmBody.innerHTML = `Table <strong>${escapeHtml(table)}</strong> — your order is with the kitchen.<br>You can close this tab now.`;
       confirmBillStatus.textContent = 'Waiting for confirmation from the counter...';
-      replayConfirmationCheck();
+      confirmLoading.classList.remove('hidden');
+      confirmEmoji.classList.add('hidden');
+      confirmTitle.textContent = 'Order placed!';
       confirmScreen.classList.remove('hidden');
       watchForBillNumber(orderRef.key);
     } catch (err) {
@@ -2404,6 +2428,10 @@
       orderStatusRef.off();
       orderStatusRef = null;
     }
+    confirmLoading.classList.remove('hidden');
+    confirmEmoji.classList.add('hidden');
+    confirmTitle.textContent = 'Order placed!';
+    confirmBillStatus.textContent = 'Waiting for confirmation from the counter...';
     confirmScreen.classList.add('hidden');
     buildMenu();
     window.scrollTo(0, 0);
