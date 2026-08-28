@@ -1408,7 +1408,6 @@
   let activeCategory = 'All';
   const cartBar = document.getElementById('cartBar');
   const cartCount = document.getElementById('cartCount');
-  const cartTotal = document.getElementById('cartTotal');
   const overlay = document.getElementById('overlay');
   const itemSheet = document.getElementById('itemSheet');
   const cartSheet = document.getElementById('cartSheet');
@@ -2318,7 +2317,6 @@
     const count = cart.reduce((s, i) => s + i.qty, 0);
     const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
     cartCount.textContent = count;
-    cartTotal.textContent = formatPrice(total);
     renderCartSheet();
     if (count > 0) {
       cartBar.classList.remove('hidden');
