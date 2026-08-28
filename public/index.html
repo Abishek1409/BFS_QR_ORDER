@@ -2305,20 +2305,30 @@
   function watchForBillNumber(orderId) {
     if (orderStatusRef) {
       orderStatusRef.off();
-    }
-    orderStatusRef = database.ref('orderStatus/' + orderId);
-    orderStatusRef.on('value', snapshot => {
-      const status = snapshot.val();
-      if (!status || !Object.prototype.hasOwnProperty.call(status, 'billNo')) return;
-
-      confirmBillStatus.textContent = 'Your Bill No: #' + String(status.billNo).padStart(3, '0');
-      confirmLoading.classList.add('hidden');
-      confirmEmoji.classList.remove('hidden');
-      confirmTitle.textContent = 'Order confirmed!';
-      orderStatusRef.off();
-      orderStatusRef.remove().catch(() => {});
       orderStatusRef = null;
-    });
+    }
+
+    const ref = database.ref('orderStatus/' + orderId);
+    const listener = snapshot => {
+      try {
+        const status = snapshot.val();
+        if (!status || !Object.prototype.hasOwnProperty.call(status, 'billNo')) return;
+
+        confirmBillStatus.textContent = 'Your Bill No: #' + String(status.billNo).padStart(3, '0');
+        confirmLoading.classList.add('hidden');
+        confirmEmoji.classList.remove('hidden');
+        confirmTitle.textContent = 'Order confirmed!';
+      } catch (err) {
+        console.error('Bill number listener error:', err);
+      } finally {
+        ref.off('value', listener);
+        ref.remove().catch(() => {});
+        orderStatusRef = null;
+      }
+    };
+
+    orderStatusRef = ref;
+    ref.on('value', listener);
   }
 
   searchInput.addEventListener('input', () => {
@@ -2397,6 +2407,11 @@
     btn.textContent = 'Placing order…';
 
     try {
+      if (orderStatusRef) {
+        orderStatusRef.off();
+        orderStatusRef = null;
+      }
+
       const orderRef = database.ref('orders').push();
       await orderRef.set({
         table: table,
