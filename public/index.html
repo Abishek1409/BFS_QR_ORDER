@@ -2412,13 +2412,22 @@
         orderStatusRef = null;
       }
 
+      const itemsSnapshot = JSON.parse(JSON.stringify(cart));
       const orderRef = database.ref('orders').push();
-      await orderRef.set({
-        table: table,
-        items: cart,
-        status: 'pending',
-        timestamp: firebase.database.ServerValue.TIMESTAMP
+
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Order timed out. Please try again.')), 15000);
       });
+
+      await Promise.race([
+        orderRef.set({
+          table: table,
+          items: itemsSnapshot,
+          status: 'pending',
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        }),
+        timeoutPromise
+      ]);
 
       closeSheet(cartSheet);
       cartBar.classList.add('hidden');
