@@ -456,14 +456,14 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 50;
-    background: #16181D;
+    background: var(--color-primary);
     color: #FFFFFF;
     border-radius: 50px;
-    padding: 12px 24px;
+    padding: 14px 20px;
     display: flex;
     align-items: center;
     gap: 12px;
-    box-shadow: var(--shadow-lg);
+    box-shadow: 0 8px 28px rgba(255, 159, 252, 0.45);
     cursor: pointer;
     width: calc(100% - 32px);
     max-width: 560px;
@@ -479,13 +479,14 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    font-weight: 600;
+    font-weight: 700;
     font-size: 15px;
+    color: #FFFFFF;
   }
 
   .cart-badge {
-    background: var(--color-primary);
-    color: #fff;
+    background: rgba(5, 8, 10, 0.35);
+    color: #FFFFFF;
     font-size: 12px;
     font-weight: 700;
     min-width: 24px;
@@ -498,8 +499,22 @@
   }
 
   .cart-bar-right {
-    font-size: 15px;
+    font-size: 14px;
     font-weight: 700;
+    color: #FFFFFF;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(5, 8, 10, 0.35);
+    padding: 8px 14px;
+    border-radius: 50px;
+  }
+
+  .cart-bar-right::after {
+    content: '›';
+    font-size: 18px;
+    line-height: 1;
+    margin-left: 2px;
   }
 
   .cart-bar.hidden {
@@ -1069,6 +1084,16 @@
     padding: 40px 24px;
   }
 
+  .confirm-bill-status {
+    min-height: 28px;
+    margin-bottom: 24px;
+    color: var(--color-primary);
+    font-size: 32px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    line-height: 1.2;
+  }
+
   .confirm-emoji {
     width: 76px;
     height: 76px;
@@ -1116,14 +1141,6 @@
     color: var(--color-text-secondary);
     line-height: 1.5;
     margin-bottom: 20px;
-  }
-
-  .confirm-bill-status {
-    min-height: 22px;
-    margin-bottom: 20px;
-    color: var(--color-primary-dark);
-    font-size: 15px;
-    font-weight: 700;
   }
 
   .confirm-action {
@@ -1254,7 +1271,7 @@
     <span class="cart-badge" id="cartCount">0</span>
     <span>Cart</span>
   </div>
-  <div class="cart-bar-right" id="cartTotal">₹0</div>
+  <div class="cart-bar-right">Confirm Order</div>
 </div>
 
 <div class="overlay" id="overlay"></div>
@@ -1350,6 +1367,7 @@
 
 <!-- Confirmation screen -->
 <div class="confirm-screen hidden" id="confirmScreen">
+  <div class="confirm-bill-status" id="confirmBillStatus">Waiting for confirmation from the counter...</div>
   <div class="confirm-emoji" aria-hidden="true">
     <svg class="confirm-check" viewBox="0 0 76 76">
       <circle cx="38" cy="38" r="34" stroke-width="4"></circle>
@@ -1358,7 +1376,6 @@
   </div>
   <div class="confirm-title">Order placed!</div>
   <div class="confirm-body" id="confirmBody">Table — your order is with the kitchen.<br>You can close this tab now.</div>
-  <div class="confirm-bill-status" id="confirmBillStatus">Waiting for confirmation from the counter...</div>
   <button class="btn btn-primary confirm-action" id="orderMore">Order More</button>
 </div>
 
