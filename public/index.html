@@ -2400,6 +2400,13 @@
     });
   }
 
+  function resetConfirmOrderButton() {
+    const btn = document.getElementById('confirmOrder');
+    if (!btn) return;
+    btn.disabled = false;
+    btn.textContent = 'Confirm Order';
+  }
+
   document.getElementById('confirmOrder').addEventListener('click', async () => {
     if (!cart.length || !table) return;
     const btn = document.getElementById('confirmOrder');
@@ -2440,10 +2447,10 @@
       confirmTitle.textContent = 'Order placed!';
       confirmScreen.classList.remove('hidden');
       watchForBillNumber(orderRef.key);
+      resetConfirmOrderButton();
     } catch (err) {
       alert('Could not place order. Please check your WiFi and try again.');
-      btn.disabled = false;
-      btn.textContent = 'Confirm Order';
+      resetConfirmOrderButton();
     }
   });
 
@@ -2452,6 +2459,7 @@
       orderStatusRef.off();
       orderStatusRef = null;
     }
+    resetConfirmOrderButton();
     confirmLoading.classList.remove('hidden');
     confirmEmoji.classList.add('hidden');
     confirmTitle.textContent = 'Order placed!';
