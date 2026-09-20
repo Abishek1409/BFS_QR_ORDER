@@ -1789,8 +1789,12 @@
     return /shake/i.test(name);
   }
 
+  function isBeverageCategoryName(name) {
+    return /beverage/i.test(name);
+  }
+
   function isDrinkCategoryName(name) {
-    return isJuiceCategoryName(name) || isShakeCategoryName(name);
+    return isJuiceCategoryName(name) || isShakeCategoryName(name) || isBeverageCategoryName(name);
   }
 
   function badgeClassFor(name) {
