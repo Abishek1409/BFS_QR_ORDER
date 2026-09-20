@@ -78,15 +78,19 @@
 
   .hero-logo {
     position: absolute;
-    top: 24px;
+    top: 50%;
     right: clamp(20px, 5vw, 72px);
     z-index: 2;
-    width: clamp(72px, 10vw, 128px);
-    height: clamp(72px, 10vw, 128px);
-    object-fit: cover;
-    border: 1px solid rgba(212, 175, 55, 0.65);
-    border-radius: 50%;
-    box-shadow: 0 0 26px rgba(212, 175, 55, 0.35);
+    width: clamp(180px, 24vw, 320px);
+    aspect-ratio: 1;
+    height: auto;
+    object-fit: contain;
+    padding: 12px;
+    background: #000;
+    border: 2px solid rgba(212, 175, 55, 0.7);
+    border-radius: 28px;
+    box-shadow: 0 0 34px rgba(212, 175, 55, 0.35);
+    transform: translateY(-50%);
   }
 
   .hero-inner {
@@ -100,11 +104,17 @@
   }
 
   @media (max-width: 680px) {
+    .hero {
+      padding-top: 164px;
+    }
+
     .hero-logo {
-      top: 18px;
-      right: 18px;
-      width: 64px;
-      height: 64px;
+      top: 22px;
+      right: 50%;
+      width: 118px;
+      transform: translateX(50%);
+      padding: 7px;
+      border-radius: 22px;
     }
   }
 
@@ -1402,7 +1412,7 @@
 </header>
 
 <section class="hero" aria-labelledby="heroTitle">
-  <img class="hero-logo" src="/34908.jpg" alt="Best Fruits Stall logo">
+  <img class="hero-logo" src="/34909.jpg" alt="Best Fruits Stall logo">
   <div class="hero-inner">
     <div class="hero-copy">
       <div class="hero-kicker"><span class="hero-badge">NEW</span> Fresh today</div>
