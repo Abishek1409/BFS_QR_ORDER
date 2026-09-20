@@ -550,6 +550,148 @@
   }
 
   /* Overlay */
+  .pending-orders-panel {
+    position: sticky;
+    top: 78px;
+    z-index: 8;
+    max-width: 1240px;
+    margin: 16px auto 0;
+    padding: 0 24px;
+  }
+
+  .pending-orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(18, 23, 34, 0.78);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 8px 10px;
+    backdrop-filter: blur(8px);
+  }
+
+  .pending-order-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 38px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .pending-order-item.confirmed {
+    border-color: rgba(22, 163, 74, 0.4);
+    background: rgba(22, 163, 74, 0.08);
+    color: var(--color-text);
+  }
+
+  .pending-order-copy {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pending-order-copy strong {
+    color: var(--color-text);
+    font-weight: 700;
+  }
+
+  .pending-order-dismiss {
+    width: 24px;
+    height: 24px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-text-secondary);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .pending-order-item.confirmed .pending-order-dismiss {
+    color: var(--color-text);
+  }
+
+  .pending-empty {
+    display: none;
+  }
+
+  .pending-orders-panel {
+    position: sticky;
+    top: 78px;
+    z-index: 8;
+    max-width: 1240px;
+    margin: 16px auto 0;
+    padding: 0 24px;
+  }
+
+  .pending-orders-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: rgba(18, 23, 34, 0.78);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-sm);
+    padding: 8px 10px;
+    backdrop-filter: blur(8px);
+  }
+
+  .pending-order-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    min-height: 38px;
+    padding: 8px 10px;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    color: var(--color-text-secondary);
+    font-size: 13px;
+    line-height: 1.35;
+  }
+
+  .pending-order-item.confirmed {
+    border-color: rgba(22, 163, 74, 0.4);
+    background: rgba(22, 163, 74, 0.08);
+    color: var(--color-text);
+  }
+
+  .pending-order-copy {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .pending-order-copy strong {
+    color: var(--color-text);
+    font-weight: 700;
+  }
+
+  .pending-order-dismiss {
+    width: 24px;
+    height: 24px;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--color-text-secondary);
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+
+  .pending-order-item.confirmed .pending-order-dismiss {
+    color: var(--color-text);
+  }
+
   .overlay {
      position: fixed;
      inset: 0;
@@ -1290,6 +1432,7 @@
 
 <div class="overlay" id="overlay"></div>
 <div class="toast" id="toast" role="status"></div>
+<div class="pending-orders-panel hidden" id="pendingOrdersPanel" aria-live="polite"></div>
 
 <!-- Item detail sheet -->
 <!-- Item detail sheet with React Bits Stepper -->
@@ -1435,6 +1578,8 @@
   const orderMore = document.getElementById('orderMore');
   const addToCart = document.getElementById('addToCart');
   const toast = document.getElementById('toast');
+  const pendingOrdersPanel = document.getElementById('pendingOrdersPanel');
+  const PENDING_ORDERS_STORAGE_KEY = 'bfs_pending_orders';
 
   let menu = {
     categories: [
@@ -1487,9 +1632,154 @@
   let note = '';
   let isJuiceCategory = false;
   let searchQuery = '';
-  let orderStatusRef = null;
+  let activeOrderId = null;
+  let pendingOrders = [];
+  let pendingOrderListeners = {};
 
   tableBadge.textContent = table ? 'Table ' + table : 'Table —';
+
+  function persistPendingOrders() {
+    try {
+      sessionStorage.setItem(PENDING_ORDERS_STORAGE_KEY, JSON.stringify(pendingOrders));
+    } catch (err) {
+      console.warn('Could not persist pending orders:', err);
+    }
+    renderPendingOrdersPanel();
+  }
+
+  function loadPendingOrders() {
+    try {
+      const raw = sessionStorage.getItem(PENDING_ORDERS_STORAGE_KEY);
+      if (!raw) return [];
+      const saved = JSON.parse(raw);
+      if (!Array.isArray(saved)) return [];
+      return saved.filter(order => order && order.id && order.table).map(order => ({
+        id: String(order.id),
+        table: String(order.table || 'Walk-in'),
+        placedAt: Number(order.placedAt) || Date.now(),
+        billNo: order.billNo === null || typeof order.billNo === 'undefined' ? null : Number(order.billNo)
+      }));
+    } catch (err) {
+      console.warn('Could not load pending orders from sessionStorage:', err);
+      return [];
+    }
+  }
+
+  function getRelativeTimeLabel(timestamp) {
+    const diffMinutes = Math.max(0, Math.round((Date.now() - Number(timestamp)) / 60000));
+    if (diffMinutes <= 0) return 'just now';
+    if (diffMinutes === 1) return '1 min ago';
+    return diffMinutes + ' min ago';
+  }
+
+  function renderPendingOrdersPanel() {
+    if (!pendingOrdersPanel) return;
+
+    pendingOrdersPanel.innerHTML = '';
+    pendingOrdersPanel.classList.toggle('hidden', pendingOrders.length === 0);
+
+    if (!pendingOrders.length) return;
+
+    const list = document.createElement('div');
+    list.className = 'pending-orders-list';
+
+    pendingOrders
+      .slice()
+      .sort((a, b) => Number(a.placedAt) - Number(b.placedAt))
+      .forEach((order) => {
+        const item = document.createElement('div');
+        item.className = 'pending-order-item ' + (order.billNo !== null ? 'confirmed' : 'waiting');
+        const statusText = order.billNo !== null
+          ? 'Bill No: #' + String(order.billNo).padStart(3, '0')
+          : 'Waiting for bill number...';
+
+        item.innerHTML = `
+          <div class="pending-order-copy"><strong>Order placed ${getRelativeTimeLabel(order.placedAt)}</strong> — ${statusText}</div>
+          <button class="pending-order-dismiss" type="button" aria-label="Dismiss order status">×</button>
+        `;
+
+        const dismissBtn = item.querySelector('.pending-order-dismiss');
+        dismissBtn.addEventListener('click', (event) => {
+          event.stopPropagation();
+          removePendingOrder(order.id);
+        });
+
+        list.appendChild(item);
+      });
+
+    pendingOrdersPanel.appendChild(list);
+  }
+
+  function removePendingOrder(orderId) {
+    if (pendingOrderListeners[orderId]) {
+      const listenerState = pendingOrderListeners[orderId];
+      listenerState.ref.off('value', listenerState.listener);
+      delete pendingOrderListeners[orderId];
+    }
+
+    pendingOrders = pendingOrders.filter(order => order.id !== orderId);
+    persistPendingOrders();
+  }
+
+  function updateSingleConfirmationScreen(orderId) {
+    const order = pendingOrders.find(entry => entry.id === orderId);
+    if (!order || order.billNo === null || typeof order.billNo === 'undefined') {
+      confirmBillStatus.textContent = 'Waiting for confirmation from the counter...';
+      confirmLoading.classList.remove('hidden');
+      confirmEmoji.classList.add('hidden');
+      confirmTitle.textContent = 'Order placed!';
+      return;
+    }
+
+    confirmBillStatus.textContent = 'Your Bill No: #' + String(order.billNo).padStart(3, '0');
+    confirmLoading.classList.add('hidden');
+    confirmEmoji.classList.remove('hidden');
+    confirmTitle.textContent = 'Order confirmed!';
+  }
+
+  function watchForBillNumber(orderId, isCurrentConfirmation) {
+    if (!orderId) return;
+    if (pendingOrderListeners[orderId]) return;
+
+    const ref = database.ref('orderStatus/' + orderId);
+    const listener = (snapshot) => {
+      try {
+        const status = snapshot.val();
+        if (!status || !Object.prototype.hasOwnProperty.call(status, 'billNo')) return;
+
+        const billNo = Number(status.billNo);
+        const order = pendingOrders.find(entry => entry.id === orderId);
+
+        if (order) {
+          order.billNo = billNo;
+          persistPendingOrders();
+          if (isCurrentConfirmation || activeOrderId === orderId) {
+            updateSingleConfirmationScreen(orderId);
+          }
+        }
+
+        if (pendingOrderListeners[orderId]) {
+          ref.off('value', listener);
+          delete pendingOrderListeners[orderId];
+        }
+      } catch (err) {
+        console.error('Bill number listener error:', err);
+      }
+    };
+
+    pendingOrderListeners[orderId] = { ref, listener };
+    ref.on('value', listener);
+  }
+
+  function attachPendingOrderListeners() {
+    pendingOrders
+      .filter(order => order.billNo === null || typeof order.billNo === 'undefined')
+      .forEach(order => watchForBillNumber(order.id, false));
+  }
+
+  pendingOrders = loadPendingOrders();
+  renderPendingOrdersPanel();
+  attachPendingOrderListeners();
 
   function isJuiceCategoryName(name) {
     return /juice/i.test(name);
@@ -2302,11 +2592,9 @@
     confirmBillStatus.textContent = 'Waiting for confirmation from the counter...';
   }
 
-  function watchForBillNumber(orderId) {
-    if (orderStatusRef) {
-      orderStatusRef.off();
-      orderStatusRef = null;
-    }
+  function watchForBillNumber(orderId, isCurrentConfirmation) {
+    if (!orderId) return;
+    if (pendingOrderListeners[orderId]) return;
 
     const ref = database.ref('orderStatus/' + orderId);
     const listener = snapshot => {
@@ -2314,20 +2602,27 @@
         const status = snapshot.val();
         if (!status || !Object.prototype.hasOwnProperty.call(status, 'billNo')) return;
 
-        confirmBillStatus.textContent = 'Your Bill No: #' + String(status.billNo).padStart(3, '0');
-        confirmLoading.classList.add('hidden');
-        confirmEmoji.classList.remove('hidden');
-        confirmTitle.textContent = 'Order confirmed!';
+        const billNo = Number(status.billNo);
+        const order = pendingOrders.find(entry => entry.id === orderId);
+
+        if (order) {
+          order.billNo = billNo;
+          persistPendingOrders();
+          if (isCurrentConfirmation || activeOrderId === orderId) {
+            updateSingleConfirmationScreen(orderId);
+          }
+        }
+
+        if (pendingOrderListeners[orderId]) {
+          ref.off('value', listener);
+          delete pendingOrderListeners[orderId];
+        }
       } catch (err) {
         console.error('Bill number listener error:', err);
-      } finally {
-        ref.off('value', listener);
-        ref.remove().catch(() => {});
-        orderStatusRef = null;
       }
     };
 
-    orderStatusRef = ref;
+    pendingOrderListeners[orderId] = { ref, listener };
     ref.on('value', listener);
   }
 
@@ -2409,18 +2704,15 @@
 
   document.getElementById('confirmOrder').addEventListener('click', async () => {
     if (!cart.length || !table) return;
+
     const btn = document.getElementById('confirmOrder');
     btn.disabled = true;
     btn.textContent = 'Placing order…';
 
     try {
-      if (orderStatusRef) {
-        orderStatusRef.off();
-        orderStatusRef = null;
-      }
-
       const itemsSnapshot = JSON.parse(JSON.stringify(cart));
       const orderRef = database.ref('orders').push();
+      const orderId = orderRef.key;
 
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Order timed out. Please try again.')), 15000);
@@ -2436,6 +2728,18 @@
         timeoutPromise
       ]);
 
+      const pendingEntry = {
+        id: orderId,
+        table: table,
+        placedAt: Date.now(),
+        billNo: null
+      };
+
+      pendingOrders.push(pendingEntry);
+      persistPendingOrders();
+      activeOrderId = orderId;
+      watchForBillNumber(orderId, true);
+
       closeSheet(cartSheet);
       cartBar.classList.add('hidden');
       cart = [];
@@ -2446,7 +2750,6 @@
       confirmEmoji.classList.add('hidden');
       confirmTitle.textContent = 'Order placed!';
       confirmScreen.classList.remove('hidden');
-      watchForBillNumber(orderRef.key);
       resetConfirmOrderButton();
     } catch (err) {
       alert('Could not place order. Please check your WiFi and try again.');
@@ -2455,10 +2758,7 @@
   });
 
   orderMore.addEventListener('click', () => {
-    if (orderStatusRef) {
-      orderStatusRef.off();
-      orderStatusRef = null;
-    }
+    activeOrderId = null;
     resetConfirmOrderButton();
     confirmLoading.classList.remove('hidden');
     confirmEmoji.classList.add('hidden');
