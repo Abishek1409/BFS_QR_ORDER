@@ -7,31 +7,38 @@
 <link rel="icon" type="image/jpeg" href="/34908.jpg">
 <style>
   :root {
-    --color-primary: #D4AF37;
-    --color-primary-dark: #FFF1A8;
-    --color-primary-light: #5A4300;
-    --color-success: #16A34A;
-    --color-success-dark: #86EFAC;
-    --color-danger: #FF7A9E;
-    --color-bg: #05080A;
-    --color-header: #090B10;
-    --color-surface: #0D1117;
-    --color-surface-raised: #121722;
-    --color-text: #F4F7FA;
-    --color-text-secondary: #A7B0BD;
-    --color-border: #2F293A;
-    --color-ice: #00BEFF;
-    --color-sugar: #F5C15D;
-    --color-juice: #16A34A;
-    --color-shake: #D4AF37;
-    --color-snack: #FF9A62;
-    --color-special: #FFD66B;
+    --color-bg: #050505;
+    --color-bg-soft: #0d0b09;
+    --color-header: #0c0a09;
+    --color-surface: #120f0d;
+    --color-surface-raised: #1a1512;
+    --color-gold: #d9a441;
+    --color-gold-soft: #f3d39a;
+    --color-gold-deep: #8d5d20;
+    --color-accent: #c96f4a;
+    --color-accent-soft: #e59b73;
+    --color-ivory: #f7efe2;
+    --color-text: #f7efe2;
+    --color-text-secondary: #dcc8a7;
+    --color-border: rgba(243, 211, 154, 0.22);
+    --color-primary: #d9a441;
+    --color-primary-dark: #f3d39a;
+    --color-primary-light: #7d4f1d;
+    --color-success: #c96f4a;
+    --color-success-dark: #f0b67d;
+    --color-danger: #d67b55;
+    --color-ice: #dba96a;
+    --color-sugar: #f0c77a;
+    --color-juice: #8d5d20;
+    --color-shake: #d9a441;
+    --color-snack: #c96f4a;
+    --color-special: #f3d39a;
     --radius-sm: 8px;
     --radius-md: 14px;
     --radius-lg: 20px;
-    --shadow-sm: 0 5px 14px rgba(0, 0, 0, 0.24);
-    --shadow-md: 0 12px 28px rgba(0, 0, 0, 0.36);
-    --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.52);
+    --shadow-sm: 0 5px 14px rgba(0, 0, 0, 0.28);
+    --shadow-md: 0 12px 28px rgba(0, 0, 0, 0.38);
+    --shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.55);
     --font-stack: "Avenir Next", "Trebuchet MS", sans-serif;
   }
 
@@ -40,7 +47,9 @@
   html, body {
     height: 100%;
     font-family: var(--font-stack);
-    background: var(--color-bg);
+    background:
+      radial-gradient(circle at top, rgba(217, 164, 65, 0.12), transparent 30%),
+      linear-gradient(180deg, #050505 0%, #0c0a09 100%);
     color: var(--color-text);
     overflow-x: hidden;
     -webkit-font-smoothing: antialiased;
@@ -351,10 +360,10 @@
     text-transform: uppercase;
   }
 
-.item-badge.juice { background: rgba(22, 163, 74, 0.2); color: #86EFAC; }
-.item-badge.shake { background: rgba(212, 175, 55, 0.18); color: #FFF1A8; }
-.item-badge.snack { background: rgba(255, 154, 98, 0.18); color: #FFB08A; }
-.item-badge.special { background: rgba(255, 214, 107, 0.18); color: #FFD66B; }
+.item-badge.juice { background: rgba(201, 111, 74, 0.18); color: #f0b67d; }
+.item-badge.shake { background: rgba(217, 164, 65, 0.18); color: #f3d39a; }
+.item-badge.snack { background: rgba(201, 111, 74, 0.18); color: #e59b73; }
+.item-badge.special { background: rgba(243, 211, 154, 0.18); color: #f3d39a; }
 
   .category-tabs {
     display: flex;
@@ -435,10 +444,10 @@
   }
 
   .tab-pill.active {
-    background: var(--color-primary);
-    border-color: var(--color-primary);
-    color: #FFFFFF;
-    box-shadow: 0 6px 16px rgba(22, 163, 74, 0.18);
+    background: linear-gradient(135deg, #f3d39a 0%, #d9a441 52%, #c96f4a 100%);
+    border-color: rgba(243, 211, 154, 0.7);
+    color: #140e0a;
+    box-shadow: 0 6px 16px rgba(201, 111, 74, 0.18);
   }
 
   .empty-state {
@@ -497,14 +506,14 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 50;
-    background: var(--color-primary);
-    color: #FFFFFF;
+    background: linear-gradient(135deg, #f3d39a 0%, #d9a441 48%, #c96f4a 100%);
+    color: #140e0a;
     border-radius: 50px;
     padding: 14px 20px;
     display: flex;
     align-items: center;
     gap: 12px;
-    box-shadow: 0 8px 28px rgba(212, 175, 55, 0.45);
+    box-shadow: 0 8px 28px rgba(201, 111, 74, 0.4);
     cursor: pointer;
     width: calc(100% - 32px);
     max-width: 560px;
@@ -522,12 +531,12 @@
     gap: 10px;
     font-weight: 700;
     font-size: 15px;
-    color: #FFFFFF;
+    color: #140e0a;
   }
 
   .cart-badge {
-    background: rgba(5, 8, 10, 0.35);
-    color: #FFFFFF;
+    background: rgba(20, 14, 10, 0.22);
+    color: #140e0a;
     font-size: 12px;
     font-weight: 700;
     min-width: 24px;
@@ -542,11 +551,11 @@
   .cart-bar-right {
     font-size: 14px;
     font-weight: 700;
-    color: #FFFFFF;
+    color: #140e0a;
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    background: rgba(5, 8, 10, 0.35);
+    background: rgba(20, 14, 10, 0.22);
     padding: 8px 14px;
     border-radius: 50px;
   }
@@ -852,32 +861,32 @@
     border-radius: 9999px;
     font-weight: 700;
     font-size: 13px;
-    background: #181d28;
-    color: #a3a3a3;
-    border: 1.5px solid var(--color-border);
+    background: rgba(18, 15, 13, 0.9);
+    color: #dcc8a7;
+    border: 1.5px solid rgba(243, 211, 154, 0.18);
     transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .step-indicator.active .step-indicator-inner {
-    background: #D4AF37;
-    color: #05080A;
-    border-color: #D4AF37;
+    background: #D9A441;
+    color: #140e0a;
+    border-color: rgba(243, 211, 154, 0.4);
     transform: scale(1.08);
-    box-shadow: 0 0 14px rgba(212, 175, 55, 0.55);
+    box-shadow: 0 0 14px rgba(201, 111, 74, 0.45);
   }
 
   .step-indicator.complete .step-indicator-inner {
-    background: #16A34A;
-    color: #fff;
-    border-color: #16A34A;
-    box-shadow: 0 0 10px rgba(22, 163, 74, 0.4);
+    background: #C96F4A;
+    color: #f7efe2;
+    border-color: rgba(243, 211, 154, 0.35);
+    box-shadow: 0 0 10px rgba(201, 111, 74, 0.35);
   }
 
   .step-indicator .active-dot {
     height: 10px;
     width: 10px;
     border-radius: 9999px;
-    background-color: #05080A;
+    background-color: #140e0a;
   }
 
   .step-connector {
@@ -887,7 +896,7 @@
     flex: 1;
     overflow: hidden;
     border-radius: 4px;
-    background-color: #2F293A;
+    background-color: rgba(243, 211, 154, 0.18);
   }
 
   .step-connector-inner {
@@ -896,7 +905,7 @@
     top: 0;
     height: 100%;
     width: 0%;
-    background: linear-gradient(90deg, #D4AF37, #16A34A);
+    background: linear-gradient(90deg, #D9A441, #C96F4A);
     transition: width 0.35s ease;
   }
 
@@ -976,19 +985,19 @@
   .stepper-btn-next {
     padding: 10px 24px;
     border-radius: 50px;
-    background: linear-gradient(135deg, #FFF1A8 0%, #D4AF37 48%, #8C6A1D 100%);
+    background: linear-gradient(135deg, #f3d39a 0%, #d9a441 48%, #c96f4a 100%);
     border: none;
-    color: #05080A;
+    color: #140e0a;
     font-weight: 700;
     font-size: 14px;
     cursor: pointer;
-    box-shadow: 0 4px 14px rgba(212, 175, 55, 0.45);
+    box-shadow: 0 4px 14px rgba(201, 111, 74, 0.35);
     transition: all 0.2s;
   }
 
   .stepper-btn-next:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.55);
+    box-shadow: 0 6px 20px rgba(201, 111, 74, 0.45);
   }
 
   .step-review-card {
@@ -2207,12 +2216,12 @@
         uTilt: { value: 0 },
         uYaw: { value: 0 },
         uLineThickness: { value: 1.0 },
-        uLinesColor: { value: new THREE.Vector3(0.25, 0.20, 0.32) }, // #2F293A
-        uScanColor: { value: new THREE.Vector3(0.831, 0.686, 0.216) }, // #D4AF37
+        uLinesColor: { value: new THREE.Vector3(0.08, 0.07, 0.06) }, // near-black
+        uScanColor: { value: new THREE.Vector3(0.85, 0.64, 0.42) }, // warm amber / gold
         uGridScale: { value: 0.1 },
         uLineStyle: { value: 0 },
         uLineJitter: { value: 0.1 },
-        uScanOpacity: { value: 0.5 },
+        uScanOpacity: { value: 0.65 },
         uNoise: { value: 0.01 },
         uBloomOpacity: { value: 0.6 },
         uScanGlow: { value: 0.6 },
