@@ -38,6 +38,9 @@ let writeTimer = null;
 
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/34908.jpg', (req, res) => {
+  res.sendFile(path.join(__dirname, '34908.jpg'));
+});
 
 // CORS for the Vercel billing app on /api/orders
 app.use((req, res, next) => {

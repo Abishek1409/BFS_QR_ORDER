@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Best Fruits Stall — Order</title>
+<link rel="icon" type="image/jpeg" href="/34908.jpg">
 <style>
   :root {
     --color-primary: #D4AF37;
@@ -75,6 +76,19 @@
     padding: 64px 20px;
   }
 
+  .hero-logo {
+    position: absolute;
+    top: 24px;
+    right: clamp(20px, 5vw, 72px);
+    z-index: 2;
+    width: clamp(72px, 10vw, 128px);
+    height: clamp(72px, 10vw, 128px);
+    object-fit: cover;
+    border: 1px solid rgba(212, 175, 55, 0.65);
+    border-radius: 50%;
+    box-shadow: 0 0 26px rgba(212, 175, 55, 0.35);
+  }
+
   .hero-inner {
     max-width: 820px;
     margin: 0 auto;
@@ -83,6 +97,15 @@
     align-items: center;
     position: relative;
     z-index: 2;
+  }
+
+  @media (max-width: 680px) {
+    .hero-logo {
+      top: 18px;
+      right: 18px;
+      width: 64px;
+      height: 64px;
+    }
   }
 
   .hero-copy {
@@ -219,8 +242,16 @@
   }
 
   .brand-emoji {
-    font-size: 26px;
-    line-height: 1;
+    display: none;
+  }
+
+  .brand-logo {
+    width: 42px;
+    height: 42px;
+    object-fit: cover;
+    border-radius: 50%;
+    border: 1px solid rgba(212, 175, 55, 0.55);
+    box-shadow: 0 0 16px rgba(212, 175, 55, 0.35);
   }
 
   .table-badge {
@@ -1364,13 +1395,14 @@
 
 <header class="page-header">
   <div class="brand">
-    <span class="brand-emoji">🍊</span>
+    <img class="brand-logo" src="/34908.jpg" alt="Best Fruits Stall logo">
     <span>Best Fruits Stall<span class="brand-sub">Scan. Order. Sip.</span></span>
   </div>
   <div class="table-badge" id="tableBadge">Table —</div>
 </header>
 
 <section class="hero" aria-labelledby="heroTitle">
+  <img class="hero-logo" src="/34908.jpg" alt="Best Fruits Stall logo">
   <div class="hero-inner">
     <div class="hero-copy">
       <div class="hero-kicker"><span class="hero-badge">NEW</span> Fresh today</div>
