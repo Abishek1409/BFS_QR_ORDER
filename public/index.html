@@ -1698,6 +1698,29 @@
     renderPendingOrdersPanel();
   }
 
+  // BEGIN bill-number-helpers (extracted by tests/bill-number.test.js)
+  const BILL_NUMBER_KEYS = ['billNo', 'billNumber', 'bill_no', 'bill_number', 'bill'];
+
+  // Returns the first valid bill number (finite number or non-empty trimmed string) or null.
+  function extractBillNumber(value) {
+    if (!value || typeof value !== 'object') return null;
+    for (const key of BILL_NUMBER_KEYS) {
+      const candidate = value[key];
+      if (typeof candidate === 'number' && Number.isFinite(candidate)) return candidate;
+      if (typeof candidate === 'string' && candidate.trim() !== '') return candidate.trim();
+    }
+    return null;
+  }
+
+  // Pads numbers and all-digit strings to 3 digits; other strings are returned unchanged.
+  function formatBillNumber(billNo) {
+    const text = String(billNo);
+    return /^\d+$/.test(text) ? text.padStart(3, '0') : text;
+  }
+  // END bill-number-helpers
+
+  const BILL_ERROR_MESSAGE = 'Ask the counter for your bill number';
+
   function loadPendingOrders() {
     try {
       const raw = sessionStorage.getItem(PENDING_ORDERS_STORAGE_KEY);
@@ -1708,7 +1731,8 @@
         id: String(order.id),
         table: String(order.table || 'Walk-in'),
         placedAt: Number(order.placedAt) || Date.now(),
-        billNo: order.billNo === null || typeof order.billNo === 'undefined' ? null : Number(order.billNo)
+        billNo: extractBillNumber({ billNo: order.billNo }),
+        ...(order.billError === true ? { billError: true } : {})
       }));
     } catch (err) {
       console.warn('Could not load pending orders from sessionStorage:', err);
@@ -1739,10 +1763,14 @@
       .sort((a, b) => Number(a.placedAt) - Number(b.placedAt))
       .forEach((order) => {
         const item = document.createElement('div');
-        item.className = 'pending-order-item ' + (order.billNo !== null ? 'confirmed' : 'waiting');
-        const statusText = order.billNo !== null
-          ? 'Bill No: #' + String(order.billNo).padStart(3, '0')
-          : 'Waiting for bill number...';
+        const hasBillNo = order.billNo !== null && typeof order.billNo !== 'undefined';
+        item.className = 'pending-order-item ' + (hasBillNo ? 'confirmed' : 'waiting');
+        // Bill numbers can be strings from the Billing_Site, so escape before using innerHTML.
+        const statusText = hasBillNo
+          ? 'Bill No: #' + escapeHtml(formatBillNumber(order.billNo))
+          : order.billError
+            ? BILL_ERROR_MESSAGE
+            : 'Waiting for bill number...';
 
         item.innerHTML = `
           <div class="pending-order-copy"><strong>Order placed ${getRelativeTimeLabel(order.placedAt)}</strong> — ${statusText}</div>
@@ -1762,11 +1790,7 @@
   }
 
   function removePendingOrder(orderId) {
-    if (pendingOrderListeners[orderId]) {
-      const listenerState = pendingOrderListeners[orderId];
-      listenerState.ref.off('value', listenerState.listener);
-      delete pendingOrderListeners[orderId];
-    }
+    detachBillListeners(orderId);
 
     pendingOrders = pendingOrders.filter(order => order.id !== orderId);
     persistPendingOrders();
@@ -1775,51 +1799,87 @@
   function updateSingleConfirmationScreen(orderId) {
     const order = pendingOrders.find(entry => entry.id === orderId);
     if (!order || order.billNo === null || typeof order.billNo === 'undefined') {
-      confirmBillStatus.textContent = 'Waiting for confirmation from the counter...';
-      confirmLoading.classList.remove('hidden');
+      confirmBillStatus.textContent = order && order.billError
+        ? BILL_ERROR_MESSAGE
+        : 'Waiting for confirmation from the counter...';
+      // Stop the spinner once both reads have failed; nothing more is coming.
+      confirmLoading.classList.toggle('hidden', Boolean(order && order.billError));
       confirmEmoji.classList.add('hidden');
       confirmTitle.textContent = 'Order placed!';
       return;
     }
 
-    confirmBillStatus.textContent = 'Your Bill No: #' + String(order.billNo).padStart(3, '0');
+    // textContent is used here, so no HTML escaping is needed.
+    confirmBillStatus.textContent = 'Your Bill No: #' + formatBillNumber(order.billNo);
     confirmLoading.classList.add('hidden');
     confirmEmoji.classList.remove('hidden');
     confirmTitle.textContent = 'Order confirmed!';
   }
 
+  function detachBillListeners(orderId) {
+    const state = pendingOrderListeners[orderId];
+    if (!state) return;
+    state.entries.forEach(entry => entry.ref.off('value', entry.listener));
+    delete pendingOrderListeners[orderId];
+  }
+
+  // Watches both orderStatus/{id} and orders/{id}; the first valid bill number wins.
   function watchForBillNumber(orderId, isCurrentConfirmation) {
     if (!orderId) return;
     if (pendingOrderListeners[orderId]) return;
 
-    const ref = database.ref('orderStatus/' + orderId);
-    const listener = (snapshot) => {
-      try {
-        const status = snapshot.val();
-        if (!status || !Object.prototype.hasOwnProperty.call(status, 'billNo')) return;
+    const state = { entries: [], failedPaths: new Set() };
+    pendingOrderListeners[orderId] = state;
 
-        const billNo = Number(status.billNo);
-        const order = pendingOrders.find(entry => entry.id === orderId);
-
-        if (order) {
-          order.billNo = billNo;
-          persistPendingOrders();
-          if (isCurrentConfirmation || activeOrderId === orderId) {
-            updateSingleConfirmationScreen(orderId);
-          }
-        }
-
-        if (pendingOrderListeners[orderId]) {
-          ref.off('value', listener);
-          delete pendingOrderListeners[orderId];
-        }
-      } catch (err) {
-        console.error('Bill number listener error:', err);
+    const refreshUi = () => {
+      persistPendingOrders(); // also re-renders the pending orders panel
+      if (isCurrentConfirmation || activeOrderId === orderId) {
+        updateSingleConfirmationScreen(orderId);
       }
     };
 
-    pendingOrderListeners[orderId] = { ref, listener };
-    ref.on('value', listener);
+    const paths = ['orderStatus/' + orderId, 'orders/' + orderId];
+
+    paths.forEach(path => {
+      // A cached value may resolve the first listener synchronously; skip attaching the rest.
+      if (pendingOrderListeners[orderId] !== state) return;
+      const ref = database.ref(path);
+
+      const listener = snapshot => {
+        try {
+          const billNo = extractBillNumber(snapshot.val());
+          if (billNo === null) return;
+
+          const order = pendingOrders.find(entry => entry.id === orderId);
+          if (order) {
+            order.billNo = billNo;
+            delete order.billError;
+          }
+          detachBillListeners(orderId);
+          if (order) refreshUi();
+        } catch (err) {
+          console.error('[bill-number]', orderId, path, err);
+        }
+      };
+
+      const onError = err => {
+        console.error('[bill-number]', orderId, path, err && err.code);
+        if (pendingOrderListeners[orderId] !== state) return;
+
+        state.failedPaths.add(path);
+        if (state.failedPaths.size < paths.length) return;
+
+        const order = pendingOrders.find(entry => entry.id === orderId);
+        detachBillListeners(orderId);
+        if (order && (order.billNo === null || typeof order.billNo === 'undefined')) {
+          order.billError = true;
+          refreshUi();
+        }
+      };
+
+      state.entries.push({ ref, listener, path });
+      ref.on('value', listener, onError);
+    });
   }
 
   function attachPendingOrderListeners() {
@@ -2645,40 +2705,6 @@
     confirmEmoji.classList.add('hidden');
     confirmTitle.textContent = 'Order placed!';
     confirmBillStatus.textContent = 'Waiting for confirmation from the counter...';
-  }
-
-  function watchForBillNumber(orderId, isCurrentConfirmation) {
-    if (!orderId) return;
-    if (pendingOrderListeners[orderId]) return;
-
-    const ref = database.ref('orderStatus/' + orderId);
-    const listener = snapshot => {
-      try {
-        const status = snapshot.val();
-        if (!status || !Object.prototype.hasOwnProperty.call(status, 'billNo')) return;
-
-        const billNo = Number(status.billNo);
-        const order = pendingOrders.find(entry => entry.id === orderId);
-
-        if (order) {
-          order.billNo = billNo;
-          persistPendingOrders();
-          if (isCurrentConfirmation || activeOrderId === orderId) {
-            updateSingleConfirmationScreen(orderId);
-          }
-        }
-
-        if (pendingOrderListeners[orderId]) {
-          ref.off('value', listener);
-          delete pendingOrderListeners[orderId];
-        }
-      } catch (err) {
-        console.error('Bill number listener error:', err);
-      }
-    };
-
-    pendingOrderListeners[orderId] = { ref, listener };
-    ref.on('value', listener);
   }
 
   searchInput.addEventListener('input', () => {
