@@ -1599,6 +1599,7 @@
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script>
 (function() {
   'use strict';
@@ -1616,6 +1617,14 @@
 
   firebase.initializeApp(firebaseConfig);
   const database = firebase.database();
+
+  // Invisible anonymous sign-in: the secured database rules only accept signed-in orders.
+  const auth = firebase.auth();
+  function ensureSignedIn() {
+    return auth.currentUser ? Promise.resolve(auth.currentUser) : auth.signInAnonymously().then(c => c.user);
+  }
+  // Resolves once the saved sign-in (if any) has been restored.
+  const authReady = new Promise(resolve => { const off = auth.onAuthStateChanged(u => { off(); resolve(u); }); });
 
   const table = new URLSearchParams(window.location.search).get('table') || 'Walk-in';
   const tableBadge = document.getElementById('tableBadge');
@@ -1993,7 +2002,8 @@
 
   pendingOrders = loadPendingOrders();
   renderPendingOrdersPanel();
-  attachPendingOrderListeners();
+  authReady.then(ensureSignedIn).then(attachPendingOrderListeners)
+    .catch(err => console.warn('Anonymous sign-in failed:', err && err.code));
 
   function isJuiceCategoryName(name) {
     return /juice/i.test(name);
@@ -2910,6 +2920,7 @@
     btn.textContent = 'Placing order…';
 
     try {
+      const user = await ensureSignedIn();
       const itemsSnapshot = JSON.parse(JSON.stringify(cart));
       const orderRef = database.ref('orders').push();
       const orderId = orderRef.key;
@@ -2923,6 +2934,7 @@
           table: table,
           items: itemsSnapshot,
           status: 'pending',
+          uid: user.uid,
           timestamp: firebase.database.ServerValue.TIMESTAMP
         }),
         timeoutPromise
