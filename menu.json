@@ -1,43 +1,478 @@
 {
   "categories": [
     {
+      "name": "Quick Bites",
+      "items": [
+        {
+          "id": "qb1",
+          "name": "Bread Omelette",
+          "price": 50,
+          "image": "/assets/bread-omelette.jpg"
+        },
+        {
+          "id": "qb2",
+          "name": "Onion Rings",
+          "price": 50,
+          "image": "/assets/onion-rings.jpg"
+        },
+        {
+          "id": "qb3",
+          "name": "Veg Puffs / Roll",
+          "price": 25,
+          "image": "/assets/veg-puffs.jpg"
+        },
+        {
+          "id": "qb4",
+          "name": "Mushroom Puffs",
+          "price": 30,
+          "image": "/assets/mushroom-puffs.jpg"
+        },
+        {
+          "id": "qb5",
+          "name": "Egg Puffs",
+          "price": 25,
+          "image": "/assets/egg-puffs.jpg"
+        },
+        {
+          "id": "qb6",
+          "name": "Chicken Puffs / Roll",
+          "price": 30,
+          "image": "/assets/chicken-puffs.jpg"
+        }
+      ]
+    },
+    {
+      "name": "Fries",
+      "items": [
+        {
+          "id": "fr1",
+          "name": "French Fries",
+          "price": 60,
+          "image": "/assets/french-fries.jpg"
+        },
+        {
+          "id": "fr2",
+          "name": "Peri Peri Fries",
+          "price": 70,
+          "image": "/assets/peri-peri-fries.jpg"
+        },
+        {
+          "id": "fr3",
+          "name": "Masala Fries",
+          "price": 70,
+          "image": "/assets/masala-fries.jpg"
+        },
+        {
+          "id": "fr4",
+          "name": "Cheesy Fries",
+          "price": 100,
+          "image": "/assets/cheesy-fries.jpg"
+        },
+        {
+          "id": "fr5",
+          "name": "Chicken Loaded Fries",
+          "price": 140,
+          "image": "/assets/chicken loaded fries.jpeg"
+        }
+      ]
+    },
+    {
+      "name": "Wraps",
+      "items": [
+        {
+          "id": "wr1",
+          "name": "Veg Wrap",
+          "price": 80,
+          "image": "/assets/veg-wrap.jpg"
+        },
+        {
+          "id": "wr2",
+          "name": "Mushroom Wrap",
+          "price": 90,
+          "image": "/assets/mushroom-wrap.jpg"
+        },
+        {
+          "id": "wr3",
+          "name": "Paneer Wrap",
+          "price": 100,
+          "image": "/assets/paneer-wrap.jpg"
+        },
+        {
+          "id": "wr4",
+          "name": "Chicken Wrap",
+          "price": 100,
+          "image": "/assets/chicken-wrap.jpg"
+        }
+      ]
+    },
+    {
+      "name": "Sandwich",
+      "items": [
+        {
+          "id": "sw1",
+          "name": "Grilled Veg Sandwich",
+          "price": 60,
+          "image": "/assets/grilled-veg-sandwich.jpg"
+        },
+        {
+          "id": "sw2",
+          "name": "Mushroom Sandwich",
+          "price": 80,
+          "image": "/assets/mushroom-sandwich.jpg"
+        },
+        {
+          "id": "sw3",
+          "name": "Paneer Sandwich",
+          "price": 100,
+          "image": "/assets/paneer-sandwich.jpg"
+        },
+        {
+          "id": "sw4",
+          "name": "Grilled Chicken Sandwich",
+          "price": 100,
+          "image": "/assets/grilled-chicken-sandwich.jpg"
+        }
+      ]
+    },
+    {
+      "name": "Fried Snacks",
+      "items": [
+        {
+          "id": "fs1",
+          "name": "Chicken Popcorn",
+          "price": 120,
+          "image": "/assets/Chicken popcorn.jpeg"
+        },
+        {
+          "id": "fs2",
+          "name": "Chicken Wings (4pcs)",
+          "price": 150,
+          "image": "/assets/chicken-wings.jpg"
+        },
+        {
+          "id": "fs3",
+          "name": "Chicken Leg (1pc)",
+          "price": 90,
+          "image": "/assets/chicken-leg.jpg"
+        },
+        {
+          "id": "fs4",
+          "name": "Paneer Popcorn",
+          "price": 110,
+          "image": "/assets/paneer-popcorn.jpg"
+        },
+        {
+          "id": "fs5",
+          "name": "Cheese Stuffed Mushroom",
+          "price": 90,
+          "image": "/assets/cheese-stuffed-mushroom.jpg"
+        }
+      ]
+    },
+    {
+      "name": "Burgers",
+      "items": [
+        {
+          "id": "bg1",
+          "name": "Veg Burger",
+          "price": 80,
+          "image": "/assets/Veg burger.jpeg"
+        },
+        {
+          "id": "bg2",
+          "name": "Mushroom Burger",
+          "price": 100,
+          "image": "/assets/mushroom-burger.jpg"
+        },
+        {
+          "id": "bg3",
+          "name": "Paneer Burger",
+          "price": 120,
+          "image": "/assets/paneer-burger.jpg"
+        },
+        {
+          "id": "bg4",
+          "name": "Fried Egg Burger",
+          "price": 100,
+          "image": "/assets/fried-egg-burger.jpg"
+        },
+        {
+          "id": "bg5",
+          "name": "Fried Chicken Burger",
+          "price": 120,
+          "image": "/assets/fried-chicken-burger.jpg"
+        }
+      ]
+    },
+    {
+      "name": "Hot",
+      "items": [
+        {
+          "id": "ht1",
+          "name": "Tea / Lemon Tea",
+          "price": 15,
+          "image": "/assets/Tea.jpg"
+        },
+        {
+          "id": "ht2",
+          "name": "Black Tea",
+          "price": 10,
+          "image": "/assets/Black tea.jpeg"
+        },
+        {
+          "id": "ht3",
+          "name": "Masala / Ginger / Cardamom Tea",
+          "price": 20,
+          "image": "/assets/masala-tea.jpg"
+        },
+        {
+          "id": "ht4",
+          "name": "Filter Coffee",
+          "price": 20,
+          "image": "/assets/filter-coffee.jpg"
+        },
+        {
+          "id": "ht5",
+          "name": "Black Coffee",
+          "price": 15,
+          "image": "/assets/black cofee.jpeg"
+        },
+        {
+          "id": "ht6",
+          "name": "Boost / Horlicks",
+          "price": 20,
+          "image": "/assets/boost.jpeg"
+        }
+      ]
+    },
+    {
+      "name": "Cold",
+      "items": [
+        {
+          "id": "cd1",
+          "name": "Watermelon Iced Tea",
+          "price": 50,
+          "image": "/assets/watermelon-iced-tea.jpg"
+        },
+        {
+          "id": "cd2",
+          "name": "Cold Coffee / Milo",
+          "price": 90,
+          "image": "/assets/cold coffee.jpg"
+        }
+      ]
+    },
+    {
       "name": "Fresh Juices",
       "items": [
-        { "id": "j1", "name": "Orange Juice", "price": 80 },
-        { "id": "j2", "name": "Apple Juice", "price": 90 },
-        { "id": "j3", "name": "Mango Juice", "price": 100 },
-        { "id": "j4", "name": "Watermelon Juice", "price": 70 },
-        { "id": "j5", "name": "Pineapple Juice", "price": 85 },
-        { "id": "j6", "name": "Mixed Fruit Juice", "price": 120 }
+        {
+          "id": "j1",
+          "name": "Badam Milk",
+          "price": 30,
+          "image": "/assets/badam-milk.jpg"
+        },
+        {
+          "id": "j2",
+          "name": "Rose Milk",
+          "price": 30,
+          "image": "/assets/rose-milk.jpg"
+        },
+        {
+          "id": "j3",
+          "name": "Lemon Juice",
+          "price": 30,
+          "image": "/assets/lemon juice.jpg"
+        },
+        {
+          "id": "j4",
+          "name": "Nannari Sarbath",
+          "price": 30,
+          "image": "/assets/nannari-sarbath.jpg"
+        },
+        {
+          "id": "j5",
+          "name": "Lime Water",
+          "price": 30,
+          "image": "/assets/lime water.jpg"
+        },
+        {
+          "id": "j6",
+          "name": "Lassi",
+          "price": 30,
+          "image": "/assets/lassi.jpg"
+        },
+        {
+          "id": "j7",
+          "name": "Sweet Lemon Soda",
+          "price": 40,
+          "image": "/assets/sweet-lemon-soda.jpg"
+        },
+        {
+          "id": "j8",
+          "name": "Musk Melon",
+          "price": 40,
+          "image": "/assets/Muskmelon.jpeg"
+        },
+        {
+          "id": "j9",
+          "name": "Watermelon",
+          "price": 40,
+          "image": "/assets/watermelon-juice.jpg"
+        },
+        {
+          "id": "j10",
+          "name": "Grape Juice",
+          "price": 60,
+          "image": "/assets/grape-juice.jpg"
+        },
+        {
+          "id": "j11",
+          "name": "Fig Juice",
+          "price": 60,
+          "image": "/assets/fig-juice.jpg"
+        },
+        {
+          "id": "j12",
+          "name": "Dates Juice",
+          "price": 60,
+          "image": "/assets/dates-juice.jpg"
+        },
+        {
+          "id": "j13",
+          "name": "Red Banana Juice",
+          "price": 60,
+          "image": "/assets/red-banana-juice.jpg"
+        },
+        {
+          "id": "j14",
+          "name": "Saathukudi Juice",
+          "price": 60,
+          "image": "/assets/saathukudi-juice.jpg"
+        },
+        {
+          "id": "j15",
+          "name": "Pineapple Juice",
+          "price": 70,
+          "image": "/assets/pineapple-juice.jpg"
+        },
+        {
+          "id": "j16",
+          "name": "Apple Juice",
+          "price": 70,
+          "image": "/assets/apple-juice.jpg"
+        },
+        {
+          "id": "j17",
+          "name": "Dragon Juice",
+          "price": 70,
+          "image": "/assets/dragon-fruit-juice.jpg"
+        },
+        {
+          "id": "j18",
+          "name": "Avocado Juice",
+          "price": 80,
+          "image": "/assets/avocado-juice.jpg"
+        },
+        {
+          "id": "j19",
+          "name": "Strawberry Juice",
+          "price": 80,
+          "image": "/assets/strawberry-juice.jpg"
+        },
+        {
+          "id": "j20",
+          "name": "Kiwi Juice",
+          "price": 80,
+          "image": "/assets/kiwi-juice.jpg"
+        },
+        {
+          "id": "j21",
+          "name": "Orange Juice",
+          "price": 80,
+          "image": "/assets/orange-juice.jpg"
+        },
+        {
+          "id": "j22",
+          "name": "Pomegranate Juice",
+          "price": 80,
+          "image": "/assets/pomegranate-juice.jpg"
+        },
+        {
+          "id": "j23",
+          "name": "Fig + Dates",
+          "price": 80,
+          "image": "/assets/fig-dates-juice.jpg"
+        }
+      ]
+    },
+    {
+      "name": "Mojito",
+      "items": [
+        {
+          "id": "mj1",
+          "name": "Mint Mojito",
+          "price": 70,
+          "image": "/assets/mint-mojito.jpg"
+        },
+        {
+          "id": "mj2",
+          "name": "Strawberry Mojito",
+          "price": 70,
+          "image": "/assets/Strawberry mojito.jpeg"
+        },
+        {
+          "id": "mj3",
+          "name": "Watermelon Mojito",
+          "price": 70,
+          "image": "/assets/watermelon-mojito.jpg"
+        },
+        {
+          "id": "mj4",
+          "name": "Blueberry Mojito",
+          "price": 70,
+          "image": "/assets/blueberry-mojito.webp"
+        },
+        {
+          "id": "mj5",
+          "name": "Blue Curacao Mojito",
+          "price": 70,
+          "image": "/assets/blue-curacao-mojito.avif"
+        }
       ]
     },
     {
       "name": "Milkshakes",
       "items": [
-        { "id": "m1", "name": "Vanilla Milkshake", "price": 110 },
-        { "id": "m2", "name": "Chocolate Milkshake", "price": 120 },
-        { "id": "m3", "name": "Strawberry Milkshake", "price": 120 },
-        { "id": "m4", "name": "Mango Milkshake", "price": 130 }
-      ]
-    },
-    {
-      "name": "Snacks",
-      "items": [
-        { "id": "s1", "name": "Veg Sandwich", "price": 60 },
-        { "id": "s2", "name": "Cheese Sandwich", "price": 80 },
-        { "id": "s3", "name": "French Fries", "price": 70 },
-        { "id": "s4", "name": "Onion Pakora", "price": 50 },
-        { "id": "s5", "name": "Paneer Tikka", "price": 100 },
-        { "id": "s6", "name": "Spring Roll", "price": 80 }
-      ]
-    },
-    {
-      "name": "Beverages",
-      "items": [
-        { "id": "b1", "name": "Filter Coffee", "price": 40 },
-        { "id": "b2", "name": "Cold Coffee", "price": 90 },
-        { "id": "b3", "name": "Masala Chai", "price": 30 },
-        { "id": "b4", "name": "Green Tea", "price": 50 }
+        {
+          "id": "m1",
+          "name": "Vanilla Milkshake",
+          "price": 70,
+          "image": "/assets/vanilla-milkshake.jpg"
+        },
+        {
+          "id": "m2",
+          "name": "Strawberry Milkshake",
+          "price": 80,
+          "image": "/assets/strawberry-milkshake.jpg"
+        },
+        {
+          "id": "m3",
+          "name": "Chocolate Milkshake",
+          "price": 90,
+          "image": "/assets/chocolate-milkshake.jpg"
+        },
+        {
+          "id": "m4",
+          "name": "Butterscotch Milkshake",
+          "price": 90,
+          "image": "/assets/butterscotch-milkshake.jpg"
+        },
+        {
+          "id": "m5",
+          "name": "Oreo Milkshake",
+          "price": 110,
+          "image": "/assets/oreo-milkshake.jpg"
+        }
       ]
     }
   ]
