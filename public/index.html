@@ -326,6 +326,15 @@
 
   .item-card:active { transform: scale(0.97); border-color: var(--color-primary); }
 
+  /* Marked Out of stock by the admin on the billing page (Firebase menuStock). */
+  .item-card.out-of-stock { cursor: not-allowed; opacity: 0.5; filter: grayscale(0.7); }
+  .item-card.out-of-stock:hover, .item-card.out-of-stock:active { transform: none; box-shadow: var(--shadow-sm); border-color: var(--color-border); }
+  .out-of-stock-label {
+    position: absolute; top: 10px; left: 10px; z-index: 3;
+    background: #B3261E; color: #fff; font-size: 0.72rem; font-weight: 800;
+    border-radius: 999px; padding: 4px 9px;
+  }
+
   .item-card:hover {
     transform: translateY(-3px);
     border-color: rgba(212, 175, 55, 0.7);
@@ -1650,6 +1659,24 @@
   const pendingOrdersPanel = document.getElementById('pendingOrdersPanel');
   const PENDING_ORDERS_STORAGE_KEY = 'bfs_pending_orders';
 
+  // QR menu id -> billing (BFSCP menu-data.js) id, used by the admin In/Out of stock toggle.
+  const STOCK_ID = { qb1:47,qb2:48,qb3:49,qb7:50,qb4:51,qb5:52,qb6:53,qb8:54,fr1:55,fr2:56,fr3:57,fr4:58,fr5:59,
+    wr1:60,wr2:61,wr3:62,wr4:63,sw1:64,sw2:65,sw3:66,sw4:67,fs1:68,fs2:69,fs3:70,fs4:71,fs5:72,
+    bg1:73,bg2:74,bg3:75,bg4:76,bg5:77,ht1:1,ht7:2,ht2:3,ht3:4,ht8:5,ht9:6,ht4:7,ht5:8,ht6:9,ht10:10,
+    cd1:11,cd2:12,cd3:13,j1:14,j2:15,j3:16,j4:17,j5:18,j6:19,j7:20,j8:21,j9:22,j10:23,j11:24,j12:25,
+    j13:26,j14:27,j15:28,j16:29,j17:30,j18:31,j19:32,j20:33,j21:34,j22:35,j23:36,
+    mj1:37,mj2:38,mj3:39,mj4:40,mj5:41,m1:42,m2:43,m3:44,m4:45,m5:46 };
+  let outOfStock = {}; // billing id -> true
+  const isOut = item => !!outOfStock[STOCK_ID[item.id]];
+  ensureSignedIn().then(() => {
+    database.ref('menuStock').on('value', snap => {
+      const val = snap.val() || {};
+      outOfStock = {};
+      Object.keys(val).forEach(id => { if (val[id] === false) outOfStock[id] = true; });
+      if (typeof buildMenu === 'function' && menuContainer) buildMenu();
+    }, e => console.warn('Could not load stock status:', e));
+  }).catch(e => console.warn('Sign-in for stock status failed:', e));
+
   // Images are served from the root /assets folder (see server.js and vercel.json).
   let menu = {
     categories: [
@@ -2512,6 +2539,8 @@
   function renderItemCard(item, cat, grid) {
     const card = document.createElement('div');
     card.className = 'item-card';
+    const out = isOut(item);
+    if (out) { card.classList.add('out-of-stock'); card.setAttribute('aria-disabled', 'true'); }
     card.innerHTML = `
       <span class="item-badge ${badgeClassFor(cat.name)}">${escapeHtml(cat.name)}</span>
       <div class="item-emoji">${emojiFor(cat, item)}</div>
@@ -2534,7 +2563,13 @@
       });
       card.insertBefore(img, emojiEl);
     }
-    card.addEventListener('click', () => openItemSheet(item, cat));
+    if (!out) card.addEventListener('click', () => openItemSheet(item, cat));
+    if (out) {
+      const lbl = document.createElement('span');
+      lbl.className = 'out-of-stock-label';
+      lbl.textContent = 'Out of stock';
+      card.appendChild(lbl);
+    }
     grid.appendChild(card);
   }
 
@@ -2695,6 +2730,7 @@
   }
 
   function openItemSheet(item, cat) {
+    if (isOut(item)) { showToast(item.name + ' is out of stock'); return; }
     currentItem = { ...item, categoryName: cat.name };
     isJuiceCategory = isDrinkCategoryName(cat.name);
     qty = 1;
@@ -2807,6 +2843,7 @@
       }
 
       const line = {
+        itemId: currentItem.id,
         name: name,
         price: unitPrice,
         qty: qty
@@ -2914,6 +2951,14 @@
 
   document.getElementById('confirmOrder').addEventListener('click', async () => {
     if (!cart.length || !table) return;
+    const gone = cart.filter(l => outOfStock[STOCK_ID[l.itemId]]);
+    if (gone.length) {
+      for (let i = cart.length - 1; i >= 0; i--) if (outOfStock[STOCK_ID[cart[i].itemId]]) cart.splice(i, 1);
+      updateCartBar();
+      renderCartSheet();
+      showToast('Now out of stock, removed from cart: ' + gone.map(l => l.name).join(', '));
+      return;
+    }
 
     const btn = document.getElementById('confirmOrder');
     btn.disabled = true;
@@ -2921,7 +2966,7 @@
 
     try {
       const user = await ensureSignedIn();
-      const itemsSnapshot = JSON.parse(JSON.stringify(cart));
+      const itemsSnapshot = JSON.parse(JSON.stringify(cart.map(({ itemId, ...l }) => l)));
       const orderRef = database.ref('orders').push();
       const orderId = orderRef.key;
 
