@@ -1667,7 +1667,7 @@
     j13:26,j14:27,j15:28,j16:29,j17:30,j18:31,j19:32,j20:33,j21:34,j22:35,j23:36,
     mj1:37,mj2:38,mj3:39,mj4:40,mj5:41,m1:42,m2:43,m3:44,m4:45,m5:46 };
   let outOfStock = {}; // billing id -> true
-  const isOut = item => !!outOfStock[STOCK_ID[item.id]];
+  const isOut = item => item.inStock === false || !!outOfStock[item.billingId != null ? item.billingId : STOCK_ID[item.id]];
   ensureSignedIn().then(() => {
     database.ref('menuStock').on('value', snap => {
       const val = snap.val() || {};
@@ -2844,6 +2844,7 @@
 
       const line = {
         itemId: currentItem.id,
+        billingId: currentItem.billingId,
         name: name,
         price: unitPrice,
         qty: qty
@@ -2951,9 +2952,9 @@
 
   document.getElementById('confirmOrder').addEventListener('click', async () => {
     if (!cart.length || !table) return;
-    const gone = cart.filter(l => outOfStock[STOCK_ID[l.itemId]]);
+    const gone = cart.filter(l => outOfStock[l.billingId != null ? l.billingId : STOCK_ID[l.itemId]]);
     if (gone.length) {
-      for (let i = cart.length - 1; i >= 0; i--) if (outOfStock[STOCK_ID[cart[i].itemId]]) cart.splice(i, 1);
+      for (let i = cart.length - 1; i >= 0; i--) if (outOfStock[cart[i].billingId != null ? cart[i].billingId : STOCK_ID[cart[i].itemId]]) cart.splice(i, 1);
       updateCartBar();
       renderCartSheet();
       showToast('Now out of stock, removed from cart: ' + gone.map(l => l.name).join(', '));
@@ -2966,7 +2967,7 @@
 
     try {
       const user = await ensureSignedIn();
-      const itemsSnapshot = JSON.parse(JSON.stringify(cart.map(({ itemId, ...l }) => l)));
+      const itemsSnapshot = JSON.parse(JSON.stringify(cart.map(({ itemId, billingId, ...l }) => l)));
       const orderRef = database.ref('orders').push();
       const orderId = orderRef.key;
 
@@ -3025,6 +3026,46 @@
     buildMenu();
     window.scrollTo(0, 0);
   });
+
+  /* Shared menu from the billing page admin panel (Firebase menu/items). Built-in items keep their
+     QR-site photo and category; new items use the uploaded photo. Hidden items are left out. */
+  const builtInMenu = menu.categories;
+  const builtInByBillingId = {};
+  builtInMenu.forEach(cat => cat.items.forEach(it => {
+    if (STOCK_ID[it.id] != null) builtInByBillingId[STOCK_ID[it.id]] = { item: it, cat: cat.name };
+  }));
+  const catKey = s => String(s || '').toLowerCase().replace(/[^a-z]/g, '');
+  function applySharedMenu(val) {
+    const items = Object.values(val || {}).filter(r => r && typeof r.name === 'string' && typeof r.price === 'number')
+      .sort((a, b) => a.id - b.id);
+    if (!items.length) return;
+    const order = builtInMenu.map(c => c.name);
+    const byKey = {};
+    order.forEach(n => { byKey[catKey(n)] = n; });
+    const cats = {};
+    items.forEach(r => {
+      if (r.available === false) return;
+      const known = builtInByBillingId[r.id];
+      const catName = known ? known.cat : (byKey[catKey(r.cat)] || r.cat || 'Other');
+      if (!byKey[catKey(catName)]) { byKey[catKey(catName)] = catName; order.push(catName); }
+      const img = String(r.img || '');
+      (cats[catName] = cats[catName] || []).push({
+        id: known ? known.item.id : 'b' + r.id,
+        billingId: r.id,
+        name: r.name,
+        price: r.price,
+        inStock: r.inStock !== false,
+        image: known ? known.item.image : (/^data:image\//.test(img) ? img : '')
+      });
+    });
+    menu = { categories: order.filter(n => cats[n]).map(n => ({ name: n, items: cats[n] })) };
+    if (activeCategory !== 'All' && !menu.categories.some(c => c.name === activeCategory)) activeCategory = 'All';
+    buildMenu();
+  }
+  ensureSignedIn().then(() => {
+    database.ref('menu/items').on('value', snap => applySharedMenu(snap.val()),
+      e => console.warn('Could not load shared menu, using built-in menu:', e));
+  }).catch(() => {});
 
   renderCartSheet();
   buildMenu();
