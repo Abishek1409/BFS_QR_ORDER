@@ -524,12 +524,13 @@
     }
     document.addEventListener('visibilitychange', wake);
     function blocked() {
-      return document.hidden || !visible ||
+      return document.hidden || !visible || root.classList.contains('m3d-show-open') ||
         (overlay && overlay.classList.contains('active')) ||
         (confirmScreen && !confirmScreen.classList.contains('hidden'));
     }
     var sheetWatch = new MutationObserver(wake);
     if (overlay) sheetWatch.observe(overlay, { attributes: true, attributeFilter: ['class'] });
+    sheetWatch.observe(root, { attributes: true, attributeFilter: ['class'] }); // showcase open/close
     if (confirmScreen) sheetWatch.observe(confirmScreen, { attributes: true, attributeFilter: ['class'] });
 
     var running = false;
@@ -606,7 +607,243 @@
     wake();
   }
 
+  /* ---------- Product showcase: explore every menu item, one product at a time ----------
+     Modelled on the reference recording: the product sweeps in from the left with a 3D turn,
+     settles in the centre and floats, the name reveals word by word, then it sweeps out to the
+     right as the next one arrives. Reads products from the rendered menu cards and hands
+     "Add to order" back to the existing card click, so the ordering flow is untouched. */
+  function initShowcase() {
+    var trigger = document.querySelector('.hero-cta-secondary');
+    if (!trigger || !menuContainer) return;
+
+    var el = document.createElement('div');
+    el.className = 'm3d-show';
+    el.setAttribute('role', 'dialog');
+    el.setAttribute('aria-modal', 'true');
+    el.setAttribute('aria-label', 'Explore the menu');
+    el.innerHTML =
+      '<div class="m3d-show-top">' +
+        '<span class="m3d-show-count" aria-live="polite"></span>' +
+        '<div class="m3d-show-nav">' +
+          '<button class="m3d-show-btn" data-act="prev" type="button" aria-label="Previous item">&#8592;</button>' +
+          '<button class="m3d-show-btn" data-act="next" type="button" aria-label="Next item">Next &#8594;</button>' +
+          '<button class="m3d-show-btn" data-act="close" type="button" aria-label="Close">&times;</button>' +
+        '</div>' +
+      '</div>' +
+      '<div class="m3d-show-stage">' +
+        '<h2 class="m3d-show-title"></h2>' +
+        '<div class="m3d-show-product"></div>' +
+        '<div class="m3d-show-shadow" aria-hidden="true"></div>' +
+      '</div>' +
+      '<div class="m3d-show-bottom">' +
+        '<div><div class="m3d-show-price"></div><div class="m3d-show-hint">Swipe or use the arrow keys to explore</div></div>' +
+        '<button class="m3d-show-add" type="button">Add to order</button>' +
+      '</div>';
+    document.body.appendChild(el);
+
+    var count = el.querySelector('.m3d-show-count');
+    var title = el.querySelector('.m3d-show-title');
+    var stage = el.querySelector('.m3d-show-stage');
+    var price = el.querySelector('.m3d-show-price');
+    var addBtn = el.querySelector('.m3d-show-add');
+    var prevBtn = el.querySelector('[data-act="prev"]');
+    var nextBtn = el.querySelector('[data-act="next"]');
+    var product = el.querySelector('.m3d-show-product');
+    var items = [];
+    var index = 0;
+    var busy = false;
+    var lastFocus = null;
+    var EASE = 'cubic-bezier(0.22, 1, 0.36, 1)';
+    var animate = !reduceMotion && typeof product.animate === 'function';
+
+    function collect() {
+      return Array.prototype.map.call(menuContainer.querySelectorAll('.item-card:not(.out-of-stock)'), function (card) {
+        var img = card.querySelector('.item-img');
+        var badge = card.querySelector('.item-badge');
+        var emoji = card.querySelector('.item-emoji');
+        return {
+          name: card.querySelector('.item-name').textContent.trim(),
+          price: card.querySelector('.item-price').textContent.trim(),
+          cat: badge ? badge.textContent.trim() : '',
+          img: img ? img.getAttribute('src') : '',
+          emoji: emoji ? emoji.textContent.trim() : ''
+        };
+      });
+    }
+
+    function fill(node, item) {
+      node.innerHTML = '';
+      if (item.img) {
+        var im = document.createElement('img');
+        im.src = item.img;
+        im.alt = item.name;
+        im.decoding = 'async';
+        node.appendChild(im);
+      } else {
+        var e = document.createElement('div');
+        e.className = 'm3d-emoji';
+        e.textContent = item.emoji;
+        node.appendChild(e);
+      }
+    }
+
+    function setText(item) {
+      title.innerHTML = '';
+      var cat = document.createElement('span');
+      cat.className = 'm3d-show-cat';
+      cat.textContent = item.cat;
+      title.appendChild(cat);
+      item.name.split(/\s+/).forEach(function (word, i) {
+        var w = document.createElement('span');
+        w.className = 'w';
+        w.textContent = word;
+        title.appendChild(w);
+        title.appendChild(document.createTextNode(' '));
+        if (animate) {
+          w.animate([
+            { opacity: 0, transform: 'translate3d(0, 0.6em, 0) rotateX(-60deg)' },
+            { opacity: 1, transform: 'none' }
+          ], { duration: 700, delay: 250 + i * 70, easing: EASE, fill: 'backwards' });
+        }
+      });
+      price.textContent = item.price;
+      count.textContent = (index + 1) + ' / ' + items.length;
+      prevBtn.disabled = index === 0;
+      nextBtn.disabled = index === items.length - 1;
+      // Warm the next image so the sweep never waits on the network.
+      var next = items[index + 1];
+      if (next && next.img) { var pre = new Image(); pre.src = next.img; }
+    }
+
+    // dir = 1 moves forward (old product exits right, new enters from the left), as in the reference.
+    var settle = null; // completes the running transition; also called early if the user taps again
+
+    function show(i, dir) {
+      if (i < 0 || i >= items.length) return;
+      if (settle) settle();
+      var item = items[i];
+      index = i;
+      setText(item);
+      if (!animate || dir === 0) {
+        fill(product, item);
+        product.classList.add('is-idle');
+        return;
+      }
+      busy = true;
+      product.classList.remove('is-idle');
+      var old = product;
+      var fresh = product.cloneNode(false);
+      fill(fresh, item);
+      old.parentNode.insertBefore(fresh, old.nextSibling);
+      var off = dir > 0 ? 1 : -1;
+      var exit = old.animate([
+        { transform: 'none', opacity: 1 },
+        { transform: 'translate3d(' + (off * 70) + 'vw, -4vh, -300px) rotateY(' + (-off * 40) + 'deg) scale(0.6)', opacity: 0 }
+      ], { duration: 800, easing: 'cubic-bezier(0.55, 0, 0.75, 0.3)', fill: 'forwards' });
+      var enter = fresh.animate([
+        { transform: 'translate3d(' + (-off * 70) + 'vw, 6vh, -400px) rotateY(' + (off * 45) + 'deg) rotateZ(' + (-off * 6) + 'deg) scale(0.55)', opacity: 0 },
+        { opacity: 1, offset: 0.35 },
+        { transform: 'none', opacity: 1 }
+      ], { duration: 1100, delay: 120, easing: EASE, fill: 'backwards' });
+      product = fresh;
+      var timer = setTimeout(function () { if (settle) settle(); }, 1300); // in case onfinish never fires
+      settle = function () {
+        settle = null;
+        clearTimeout(timer);
+        exit.cancel();
+        enter.finish();
+        old.remove();
+        fresh.classList.add('is-idle');
+        busy = false;
+      };
+      enter.onfinish = function () { if (settle) settle(); };
+    }
+
+    function open() {
+      items = collect();
+      if (!items.length) return false;
+      lastFocus = document.activeElement;
+      index = 0;
+      root.classList.add('m3d-show-open');
+      el.classList.add('is-open');
+      // The first product makes its entrance after the stage fades in.
+      product.innerHTML = '';
+      setTimeout(function () { show(0, animate ? 1 : 0); }, animate ? 150 : 0);
+      nextBtn.focus({ preventScroll: true });
+      return true;
+    }
+
+    function close() {
+      if (settle) settle();
+      el.classList.remove('is-open');
+      root.classList.remove('m3d-show-open');
+      if (lastFocus && lastFocus.focus) lastFocus.focus({ preventScroll: true });
+    }
+
+    trigger.addEventListener('click', function (e) {
+      if (open()) e.preventDefault(); // falls back to the plain menu link if nothing is loaded yet
+    });
+
+    el.addEventListener('click', function (e) {
+      var act = e.target.closest('[data-act]');
+      if (!act) return;
+      var a = act.getAttribute('data-act');
+      if (a === 'close') close();
+      else if (a === 'next') show(index + 1, 1);
+      else if (a === 'prev') show(index - 1, -1);
+    });
+
+    addBtn.addEventListener('click', function () {
+      var name = items[index] && items[index].name;
+      close();
+      var card = Array.prototype.find.call(menuContainer.querySelectorAll('.item-card'), function (c) {
+        return c.querySelector('.item-name').textContent.trim() === name;
+      });
+      if (card) card.click(); // opens the existing customize sheet
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (!el.classList.contains('is-open')) return;
+      if (e.key === 'Escape') close();
+      else if (e.key === 'ArrowRight') show(index + 1, 1);
+      else if (e.key === 'ArrowLeft') show(index - 1, -1);
+      else if (e.key === 'Tab') { // keep focus inside the dialog
+        var f = el.querySelectorAll('button:not([disabled])');
+        var first = f[0], last = f[f.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+    });
+
+    // Drag turns the product in 3D; a quick horizontal swipe changes item.
+    var drag = null;
+    stage.addEventListener('pointerdown', function (e) {
+      if (busy) return;
+      drag = { x: e.clientX, y: e.clientY, t: performance.now() };
+      product.classList.remove('is-idle');
+    });
+    stage.addEventListener('pointermove', function (e) {
+      if (!drag || busy || reduceMotion) return;
+      var dx = e.clientX - drag.x;
+      var dy = e.clientY - drag.y;
+      product.style.transform = 'rotateY(' + clamp(dx * 0.15, -35, 35) + 'deg) rotateX(' + clamp(-dy * 0.1, -15, 15) + 'deg)';
+    }, { passive: true });
+    function endDrag(e) {
+      if (!drag) return;
+      var dx = e.clientX - drag.x;
+      var fast = performance.now() - drag.t < 600;
+      drag = null;
+      product.style.transition = 'transform 0.6s ' + EASE;
+      product.style.transform = '';
+      setTimeout(function () { product.style.transition = ''; product.classList.add('is-idle'); }, 600);
+      if (fast && Math.abs(dx) > 50) show(index + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
+    }
+    stage.addEventListener('pointerup', endDrag);
+    stage.addEventListener('pointercancel', endDrag);
+  }
+
   /* ---------- Boot ---------- */
+  initShowcase();
   if (!reduceMotion) root.classList.add('m3d');
   readScroll();
 
