@@ -88,20 +88,20 @@
   var prevWall = wall.querySelector('[data-wall="-1"]');
   var nextWall = wall.querySelector('[data-wall="1"]');
 
-  /* ---------- Top bar: table + bag ---------- */
+  /* ---------- Top bar: table + cart ---------- */
   var barRight = el('div', 'bw-bar-right');
   tableBadge.parentNode.insertBefore(barRight, tableBadge);
   barRight.appendChild(tableBadge);
-  var bag = el('button', 'bw-bag', '<span class="bw-bag-label">Bag</span><span class="bw-bag-count">0</span>');
+  var bag = el('button', 'bw-bag', '<span class="bw-bag-label">Cart</span><span class="bw-bag-count">0</span>');
   bag.type = 'button';
-  bag.setAttribute('aria-label', 'Open bag, 0 items');
+  bag.setAttribute('aria-label', 'Open cart, 0 items');
   barRight.appendChild(bag);
   var bagCount = bag.querySelector('.bw-bag-count');
   var lastCount = 0;
   function syncBag() {
     var n = parseInt(cartCount.textContent, 10) || 0;
     bagCount.textContent = n;
-    bag.setAttribute('aria-label', 'Open bag, ' + n + (n === 1 ? ' item' : ' items'));
+    bag.setAttribute('aria-label', 'Open cart, ' + n + (n === 1 ? ' item' : ' items'));
     if (n > lastCount && !reduceMotion) { bag.classList.remove('bump'); void bag.offsetWidth; bag.classList.add('bump'); }
     lastCount = n;
   }
@@ -109,7 +109,7 @@
   syncBag();
   bag.addEventListener('click', function () {
     cartBar.click(); // existing handler renders and opens the cart (it ignores an empty cart)
-    if (!(parseInt(cartCount.textContent, 10) > 0)) showNote('Your bag is empty');
+    if (!(parseInt(cartCount.textContent, 10) > 0)) showNote('Your cart is empty');
   });
   function showNote(msg) {
     var t = document.getElementById('toast');
@@ -353,7 +353,7 @@
     focusQty = Math.max(1, Math.min(20, n));
     fQty.textContent = focusQty;
     var each = priceNum(focusItem ? focusItem.price : 0);
-    fAdd.textContent = 'Add to bag \u00B7 ' + money(each * focusQty);
+    fAdd.textContent = 'Add to cart \u00B7 ' + money(each * focusQty);
   }
 
   function fillFocus() {
@@ -423,7 +423,7 @@
     if (e.target === focus || e.target === fStage || e.target.classList.contains('bw-focus-stage-inner') || e.target.classList.contains('bw-focus-top')) closeFocus();
   });
 
-  /* Add to bag: drive the existing customize sheet so cart lines, ice and sugar rules,
+  /* Add to cart: drive the existing customize sheet so cart lines, ice and sugar rules,
      notes, toast and stock checks all come from the original code. */
   function click(id) { var b = document.getElementById(id); if (b) b.click(); }
   fAdd.addEventListener('click', function () {
