@@ -1,0 +1,108 @@
+/* BFS 3D motion layer. Additive only: every rule here animates the existing
+   design and returns it to its original resting state. Theme tokens untouched. */
+:root {
+  --m3d-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --m3d-sine: cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+/* Hero WebGL scene sits behind the existing hero copy and logo (both z-index 2). */
+.hero-3d {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.4s var(--m3d-ease);
+}
+.hero-3d.is-ready { opacity: 1; }
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Hero entrance: copy rises out of depth, then settles exactly where it was. */
+  .m3d .hero-copy > * { animation: m3dRise 1s var(--m3d-ease) both; }
+  .m3d .hero-copy > :nth-child(1) { animation-delay: 0.15s; }
+  .m3d .hero-copy > :nth-child(2) { animation-delay: 0.27s; }
+  .m3d .hero-copy > :nth-child(3) { animation-delay: 0.39s; }
+  .m3d .hero-copy > :nth-child(4) { animation-delay: 0.51s; }
+  .m3d .hero-inner { will-change: transform; }
+
+  /* Logo: scale in, then a slow natural float (uses `translate`/`scale` so the
+     existing centering transform is preserved). */
+  .m3d .hero-logo {
+    animation:
+      m3dLogoIn 1.2s var(--m3d-ease) 0.1s both,
+      m3dFloat 7s var(--m3d-sine) 1.3s infinite;
+  }
+
+  /* Scroll reveal for menu cards and category headers (added by motion3d.js). */
+  .m3d-reveal {
+    transition: opacity 0.7s var(--m3d-ease) var(--m3d-delay, 0ms), transform 0.8s var(--m3d-ease) var(--m3d-delay, 0ms),
+      box-shadow 0.3s var(--m3d-ease), border-color 0.3s var(--m3d-ease);
+  }
+  .m3d-reveal:not(.is-in) {
+    opacity: 0;
+    transform: perspective(900px) translate3d(0, 32px, 0) rotateX(12deg);
+  }
+  .m3d-reveal .item-img { transition: transform 1.2s var(--m3d-ease) var(--m3d-delay, 0ms); }
+  .m3d-reveal:not(.is-in) .item-img { transform: scale(1.14); }
+}
+
+@keyframes m3dRise {
+  from { opacity: 0; transform: perspective(800px) translate3d(0, 24px, -40px) rotateX(16deg); }
+}
+@keyframes m3dLogoIn {
+  from { opacity: 0; scale: 0.86; }
+}
+@keyframes m3dFloat {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -10px; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Desktop: product card 3D tilt with depth shadow and a soft gold reflection.
+     Resting state is identical to the original card. */
+  .m3d-fine .item-card.m3d-settled {
+    transition: transform 0.5s var(--m3d-ease), box-shadow 0.5s var(--m3d-ease), border-color 0.3s var(--m3d-ease);
+  }
+  .m3d-fine .item-card:not(.out-of-stock):hover {
+    transform: perspective(800px) rotateX(var(--m3d-rx, 0deg)) rotateY(var(--m3d-ry, 0deg)) translate3d(0, -3px, 0);
+    box-shadow: var(--m3d-shx, 0px) var(--m3d-shy, 12px) 28px rgba(0, 0, 0, 0.42);
+  }
+  .m3d-fine .item-card:not(.out-of-stock):active {
+    transform: perspective(800px) rotateX(var(--m3d-rx, 0deg)) rotateY(var(--m3d-ry, 0deg)) scale(0.98);
+  }
+  .m3d-fine .item-card::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    border-radius: inherit;
+    background: radial-gradient(circle at var(--m3d-gx, 50%) var(--m3d-gy, 0%), rgba(243, 211, 154, 0.16), transparent 55%);
+    opacity: 0;
+    transition: opacity 0.3s var(--m3d-ease);
+  }
+  .m3d-fine .item-card:not(.out-of-stock):hover::after { opacity: 1; }
+
+  /* Product image moves against the tilt for parallax depth, then floats gently. */
+  .m3d-fine .item-img {
+    transform: translate3d(var(--m3d-ix, 0px), var(--m3d-iy, 0px), 0) scale(1);
+    transition: transform 0.6s var(--m3d-ease);
+  }
+  .m3d-fine .item-card:not(.out-of-stock):hover .item-img {
+    transform: translate3d(var(--m3d-ix, 0px), var(--m3d-iy, 0px), 0) scale(1.12);
+    animation: m3dImgFloat 4s var(--m3d-sine) infinite;
+  }
+
+  /* Touch: a light press with image depth instead of hover effects. */
+  @media (hover: none) {
+    .m3d .item-img { transition: transform 0.5s var(--m3d-ease); }
+    .m3d .item-card:not(.out-of-stock):active .item-img { transform: scale(1.06); }
+  }
+}
+
+@keyframes m3dImgFloat {
+  0%, 100% { translate: 0 0; }
+  50% { translate: 0 -3px; }
+}
