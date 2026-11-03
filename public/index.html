@@ -1425,7 +1425,10 @@
   }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<link rel="stylesheet" href="/motion3d.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&display=swap">
+<link rel="stylesheet" href="/wall.css">
 </head>
 <body>
 
@@ -2920,6 +2923,11 @@
         <div class="cart-line-info">
           <div class="cart-line-name">${escapeHtml(line.name)}</div>
           <div class="cart-line-meta">${line.qty} × ${formatPrice(line.price)}</div>
+          <div class="bw-qty" role="group" aria-label="Quantity">
+            <button type="button" class="cart-qty" data-idx="${idx}" data-d="-1" aria-label="Decrease">−</button>
+            <span>${line.qty}</span>
+            <button type="button" class="cart-qty" data-idx="${idx}" data-d="1" aria-label="Increase">+</button>
+          </div>
         </div>
         <div class="cart-line-right">
           <div class="cart-line-total">${formatPrice(line.price * line.qty)}</div>
@@ -2932,6 +2940,19 @@
     const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
     document.getElementById('cartSubtotal').textContent = formatPrice(subtotal);
     document.getElementById('cartGrandTotal').textContent = formatPrice(subtotal);
+
+    // Quantity buttons in the bag: change the line's qty, or remove it at zero.
+    container.querySelectorAll('.cart-qty').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.idx, 10);
+        const line = cart[idx];
+        if (!line) return;
+        line.qty += parseInt(btn.dataset.d, 10);
+        if (line.qty < 1) cart.splice(idx, 1);
+        updateCartBar();
+        if (!cart.length) closeSheet(cartSheet);
+      });
+    });
 
     container.querySelectorAll('.btn-remove').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -3073,6 +3094,6 @@
   initGridScanBackground();
 })();
 </script>
-<script src="/motion3d.js" defer></script>
+<script src="/wall.js" defer></script>
 </body>
 </html>
