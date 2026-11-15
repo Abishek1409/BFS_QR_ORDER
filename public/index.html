@@ -3057,9 +3057,11 @@
       resetConfirmOrderButton();
     } catch (err) {
       console.error('Order submission failed:', err);
-      alert(isAddingToExistingOrder
+      const message = isAddingToExistingOrder
         ? 'Could not update your existing bill. Please check your WiFi and try again.'
-        : 'Could not place order. Please check your WiFi and try again.');
+        : 'Could not place your order. Please check your WiFi and try again.';
+      const details = err && (err.code || err.message);
+      alert(details ? `${message}\n\nError details: ${details}` : message);
       resetConfirmOrderButton();
     }
   });
