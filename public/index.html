@@ -2986,37 +2986,52 @@
     const btn = document.getElementById('confirmOrder');
     btn.disabled = true;
     btn.textContent = 'Placing order…';
+    const isAddingToExistingOrder = Boolean(activeOrderId);
 
     try {
       const user = await ensureSignedIn();
       const itemsSnapshot = JSON.parse(JSON.stringify(cart.map(({ itemId, billingId, ...l }) => l)));
-      const orderRef = database.ref('orders').push();
-      const orderId = orderRef.key;
+      let orderId = activeOrderId;
 
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Order timed out. Please try again.')), 15000);
       });
 
-      await Promise.race([
-        orderRef.set({
+      if (orderId) {
+        const itemsRef = database.ref('orders/' + orderId + '/items');
+        const transaction = await Promise.race([
+          itemsRef.transaction(currentItems => {
+            if (!Array.isArray(currentItems)) return;
+            return currentItems.concat(itemsSnapshot);
+          }),
+          timeoutPromise
+        ]);
+        if (!transaction.committed) {
+          throw new Error('The existing order could not be updated.');
+        }
+      } else {
+        const orderRef = database.ref('orders').push();
+        orderId = orderRef.key;
+        await Promise.race([
+          orderRef.set({
+            table: table,
+            items: itemsSnapshot,
+            status: 'pending',
+            uid: user.uid,
+            timestamp: firebase.database.ServerValue.TIMESTAMP
+          }),
+          timeoutPromise
+        ]);
+
+        pendingOrders.push({
+          id: orderId,
           table: table,
-          items: itemsSnapshot,
-          status: 'pending',
-          uid: user.uid,
-          timestamp: firebase.database.ServerValue.TIMESTAMP
-        }),
-        timeoutPromise
-      ]);
+          placedAt: Date.now(),
+          billNo: null
+        });
+        persistPendingOrders();
+      }
 
-      const pendingEntry = {
-        id: orderId,
-        table: table,
-        placedAt: Date.now(),
-        billNo: null
-      };
-
-      pendingOrders.push(pendingEntry);
-      persistPendingOrders();
       activeOrderId = orderId;
       watchForBillNumber(orderId, true);
 
@@ -3030,15 +3045,17 @@
       confirmEmoji.classList.add('hidden');
       confirmTitle.textContent = 'Order placed!';
       confirmScreen.classList.remove('hidden');
+      updateSingleConfirmationScreen(orderId);
       resetConfirmOrderButton();
     } catch (err) {
-      alert('Could not place order. Please check your WiFi and try again.');
+      alert(isAddingToExistingOrder
+        ? 'Could not add to your existing order. Please check your WiFi and try again.'
+        : 'Could not place order. Please check your WiFi and try again.');
       resetConfirmOrderButton();
     }
   });
 
   orderMore.addEventListener('click', () => {
-    activeOrderId = null;
     resetConfirmOrderButton();
     confirmLoading.classList.remove('hidden');
     confirmEmoji.classList.add('hidden');
