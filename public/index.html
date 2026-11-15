@@ -1875,6 +1875,7 @@
         table: String(order.table || 'Walk-in'),
         placedAt: Number(order.placedAt) || Date.now(),
         billNo: extractBillNumber({ billNo: order.billNo }),
+        billDate: typeof order.billDate === 'string' ? order.billDate : null,
         ...(order.billError === true ? { billError: true } : {})
       }));
     } catch (err) {
@@ -1996,6 +1997,7 @@
           const order = pendingOrders.find(entry => entry.id === orderId);
           if (order) {
             order.billNo = billNo;
+            order.billDate = typeof snapshot.val().billDate === 'string' ? snapshot.val().billDate : order.billDate;
             delete order.billError;
           }
           detachBillListeners(orderId);
@@ -2985,8 +2987,8 @@
 
     const btn = document.getElementById('confirmOrder');
     btn.disabled = true;
-    btn.textContent = 'Placing order…';
     const isAddingToExistingOrder = Boolean(activeOrderId);
+    btn.textContent = isAddingToExistingOrder ? 'Updating bill…' : 'Placing order…';
 
     try {
       const user = await ensureSignedIn();
@@ -2998,17 +3000,20 @@
       });
 
       if (orderId) {
-        const itemsRef = database.ref('orders/' + orderId + '/items');
-        const transaction = await Promise.race([
-          itemsRef.transaction(currentItems => {
-            if (!Array.isArray(currentItems)) return;
-            return currentItems.concat(itemsSnapshot);
+        const order = pendingOrders.find(entry => entry.id === orderId);
+        if (!order) throw new Error('The previous order is no longer available.');
+        const amendmentRef = database.ref('orderAmendments/' + orderId).push();
+        await Promise.race([
+          amendmentRef.set({
+            uid: user.uid,
+            items: itemsSnapshot,
+            createdAt: firebase.database.ServerValue.TIMESTAMP,
+            ...(order.billNo !== null && typeof order.billNo !== 'undefined'
+              ? { billNo: order.billNo, billDate: order.billDate }
+              : {})
           }),
           timeoutPromise
         ]);
-        if (!transaction.committed) {
-          throw new Error('The existing order could not be updated.');
-        }
       } else {
         const orderRef = database.ref('orders').push();
         orderId = orderRef.key;
@@ -3039,7 +3044,10 @@
       cartBar.classList.add('hidden');
       cart = [];
 
-      confirmBody.innerHTML = `Table <strong>${escapeHtml(table)}</strong> — your order is with the kitchen.<br>You can close this tab now.`;
+      const currentOrder = pendingOrders.find(entry => entry.id === orderId);
+      confirmBody.innerHTML = currentOrder && currentOrder.billNo !== null
+        ? `Table <strong>${escapeHtml(table)}</strong> — your additions are being applied to bill #${escapeHtml(formatBillNumber(currentOrder.billNo))}.`
+        : `Table <strong>${escapeHtml(table)}</strong> — your order is with the kitchen.<br>You can close this tab now.`;
       confirmBillStatus.textContent = 'Waiting for confirmation from the counter...';
       confirmLoading.classList.remove('hidden');
       confirmEmoji.classList.add('hidden');
@@ -3048,8 +3056,9 @@
       updateSingleConfirmationScreen(orderId);
       resetConfirmOrderButton();
     } catch (err) {
+      console.error('Order submission failed:', err);
       alert(isAddingToExistingOrder
-        ? 'Could not add to your existing order. Please check your WiFi and try again.'
+        ? 'Could not update your existing bill. Please check your WiFi and try again.'
         : 'Could not place order. Please check your WiFi and try again.');
       resetConfirmOrderButton();
     }
