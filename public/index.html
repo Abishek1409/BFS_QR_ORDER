@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="robots" content="noindex, nofollow, noarchive">
+<meta name="referrer" content="no-referrer">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Best Fruits Stall — Order</title>
 <link rel="icon" type="image/jpeg" href="/34908.jpg">
@@ -1371,6 +1373,76 @@
     max-width: 240px;
   }
 
+  /* What the customer ordered, kept on the confirmation screen even after the bill number arrives. */
+  .confirm-screen { overflow-y: auto; justify-content: safe center; }
+  .confirm-items {
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto 20px;
+    padding: 12px 16px;
+    border: 1px solid var(--color-border);
+    border-radius: 14px;
+    text-align: left;
+  }
+  .confirm-items-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    margin-bottom: 6px;
+  }
+  .confirm-items-list { max-height: 38vh; overflow-y: auto; }
+  .confirm-item-row,
+  .confirm-items-total {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 7px 0;
+    font-size: 14px;
+    border-bottom: 1px dashed var(--color-border);
+  }
+  .confirm-item-row span:last-child { white-space: nowrap; font-weight: 600; }
+  .confirm-items-total { border-bottom: none; font-weight: 800; font-size: 16px; }
+
+  /* Earlier orders shown in the cart, read-only. */
+  .cart-section-title {
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--color-text-secondary);
+    margin: 10px 0 2px;
+  }
+  .cart-line.ordered { opacity: 0.75; }
+  .ordered-badge {
+    display: inline-block;
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--color-success);
+    border: 1px solid currentColor;
+    border-radius: 999px;
+    padding: 1px 8px;
+  }
+
+  /* Shop-only gate: blocks the menu until the phone is confirmed to be at the stall. */
+  .shop-gate {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    background: var(--color-bg);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 32px 24px;
+    gap: 14px;
+  }
+  .shop-gate-title { font-size: 22px; font-weight: 800; }
+  .shop-gate-body { font-size: 15px; line-height: 1.5; color: var(--color-text-secondary); max-width: 340px; }
+  .shop-gate .btn { max-width: 240px; }
+
   .hidden { display: none !important; }
 
   @media (max-width: 900px) {
@@ -1482,8 +1554,12 @@
     </div>
     <div id="cartLines"></div>
     <div class="cart-summary">
+      <div class="cart-summary-row hidden" id="cartOrderedRow">
+        <span>Already ordered</span>
+        <span id="cartOrderedTotal">₹0</span>
+      </div>
       <div class="cart-summary-row">
-        <span>Subtotal</span>
+        <span id="cartSubtotalLabel">Subtotal</span>
         <span id="cartSubtotal">₹0</span>
       </div>
       <div class="cart-summary-row total">
@@ -1500,7 +1576,7 @@
     <span class="cart-badge" id="cartCount">0</span>
     <span>Cart</span>
   </div>
-  <div class="cart-bar-right">Confirm Order</div>
+  <div class="cart-bar-right" id="cartBarAction">Confirm Order</div>
 </div>
 
 <div class="overlay" id="overlay"></div>
@@ -1607,7 +1683,16 @@
   </div>
   <div class="confirm-title" id="confirmTitle">Order placed!</div>
   <div class="confirm-body" id="confirmBody">Table — your order is with the kitchen.<br>You can close this tab now.</div>
+  <div class="confirm-items hidden" id="confirmItems"></div>
   <button class="btn btn-primary confirm-action" id="orderMore">Order More</button>
+</div>
+
+<!-- Shop-only gate (see SHOP_LOCATION in the script) -->
+<div class="shop-gate hidden" id="shopGate" role="alertdialog" aria-live="polite">
+  <div class="confirm-loading" id="shopGateSpinner" aria-hidden="true"></div>
+  <div class="shop-gate-title" id="shopGateTitle">Checking your location…</div>
+  <div class="shop-gate-body" id="shopGateBody">This menu works only inside Best Fruits Stall. Please allow location access when asked.</div>
+  <button class="btn btn-primary hidden" id="shopGateRetry" type="button">Try again</button>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
@@ -1863,6 +1948,46 @@
   // END bill-number-helpers
 
   const BILL_ERROR_MESSAGE = 'Ask the counter for your bill number';
+  const ACTIVE_ORDER_STORAGE_KEY = 'bfs_active_order';
+
+  function sanitizeItems(items) {
+    if (!Array.isArray(items)) return [];
+    return items
+      .filter(l => l && typeof l.name === 'string' && Number.isFinite(Number(l.price)))
+      .map(l => ({ name: l.name, price: Number(l.price), qty: Math.max(1, parseInt(l.qty, 10) || 1) }));
+  }
+
+  // The order "Order More" adds to; remembered for this tab so a refresh keeps the ordered items.
+  function setActiveOrderId(id) {
+    activeOrderId = id || null;
+    try {
+      if (activeOrderId) sessionStorage.setItem(ACTIVE_ORDER_STORAGE_KEY, activeOrderId);
+      else sessionStorage.removeItem(ACTIVE_ORDER_STORAGE_KEY);
+    } catch (err) { /* storage unavailable: keep it in memory only */ }
+  }
+
+  function getActiveOrder() {
+    return activeOrderId ? pendingOrders.find(o => o.id === activeOrderId) || null : null;
+  }
+
+  function orderedItems() {
+    const order = getActiveOrder();
+    return order && Array.isArray(order.items) ? order.items : [];
+  }
+
+  function renderConfirmItems() {
+    const box = document.getElementById('confirmItems');
+    const items = orderedItems();
+    box.classList.toggle('hidden', items.length === 0);
+    if (!items.length) { box.innerHTML = ''; return; }
+    const total = items.reduce((s, l) => s + l.price * l.qty, 0);
+    box.innerHTML = `
+      <div class="confirm-items-title">Your order</div>
+      <div class="confirm-items-list">
+        ${items.map(l => `<div class="confirm-item-row"><span>${l.qty} × ${escapeHtml(l.name)}</span><span>${formatPrice(l.price * l.qty)}</span></div>`).join('')}
+      </div>
+      <div class="confirm-items-total"><span>Total</span><span>${formatPrice(total)}</span></div>`;
+  }
 
   function loadPendingOrders() {
     try {
@@ -1876,6 +2001,7 @@
         placedAt: Number(order.placedAt) || Date.now(),
         billNo: extractBillNumber({ billNo: order.billNo }),
         billDate: typeof order.billDate === 'string' ? order.billDate : null,
+        items: sanitizeItems(order.items),
         ...(order.billError === true ? { billError: true } : {})
       }));
     } catch (err) {
@@ -1937,6 +2063,11 @@
     detachBillListeners(orderId);
 
     pendingOrders = pendingOrders.filter(order => order.id !== orderId);
+    // A dismissed order can no longer take additions; the next order starts fresh.
+    if (activeOrderId === orderId) {
+      setActiveOrderId(null);
+      updateCartBar();
+    }
     persistPendingOrders();
   }
 
@@ -2034,6 +2165,10 @@
   }
 
   pendingOrders = loadPendingOrders();
+  try {
+    const savedActive = sessionStorage.getItem(ACTIVE_ORDER_STORAGE_KEY);
+    if (savedActive && pendingOrders.some(o => o.id === savedActive)) activeOrderId = savedActive;
+  } catch (err) { /* storage unavailable */ }
   renderPendingOrdersPanel();
   authReady.then(ensureSignedIn).then(attachPendingOrderListeners)
     .catch(err => console.warn('Anonymous sign-in failed:', err && err.code));
@@ -2899,7 +3034,9 @@
     const total = cart.reduce((s, i) => s + i.price * i.qty, 0);
     cartCount.textContent = count;
     renderCartSheet();
-    if (count > 0) {
+    const hasOrdered = orderedItems().length > 0;
+    document.getElementById('cartBarAction').textContent = count > 0 ? 'Confirm Order' : 'View Order';
+    if (count > 0 || hasOrdered) {
       cartBar.classList.remove('hidden');
     } else {
       cartBar.classList.add('hidden');
@@ -2907,7 +3044,7 @@
   }
 
   cartBar.addEventListener('click', () => {
-    if (!cart.length) return;
+    if (!cart.length && !orderedItems().length) return;
     renderCartSheet();
     openSheet(cartSheet);
   });
@@ -2915,8 +3052,29 @@
   function renderCartSheet() {
     const container = document.getElementById('cartLines');
     container.innerHTML = '';
+    const ordered = orderedItems();
+    if (ordered.length) {
+      // Earlier orders on this bill: shown for reference, not editable or re-sent.
+      container.insertAdjacentHTML('beforeend', '<div class="cart-section-title">Already ordered</div>');
+      ordered.forEach(line => {
+        container.insertAdjacentHTML('beforeend', `
+          <div class="cart-line ordered">
+            <div class="cart-line-info">
+              <div class="cart-line-name">${escapeHtml(line.name)}</div>
+              <div class="cart-line-meta">${line.qty} × ${formatPrice(line.price)}</div>
+            </div>
+            <div class="cart-line-right">
+              <div class="cart-line-total">${formatPrice(line.price * line.qty)}</div>
+              <span class="ordered-badge">Ordered</span>
+            </div>
+          </div>`);
+      });
+      container.insertAdjacentHTML('beforeend', '<div class="cart-section-title">New items</div>');
+    }
     if (!cart.length) {
-      container.innerHTML = '<div class="empty-state" style="padding:30px 10px;">Your cart is empty.</div>';
+      container.insertAdjacentHTML('beforeend', ordered.length
+        ? '<div class="empty-state" style="padding:16px 10px;">Add items from the menu to order more.</div>'
+        : '<div class="empty-state" style="padding:30px 10px;">Your cart is empty.</div>');
     }
     cart.forEach((line, idx) => {
       const div = document.createElement('div');
@@ -2940,8 +3098,14 @@
     });
 
     const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
+    const orderedTotal = ordered.reduce((s, i) => s + i.price * i.qty, 0);
+    document.getElementById('cartOrderedRow').classList.toggle('hidden', !ordered.length);
+    document.getElementById('cartOrderedTotal').textContent = formatPrice(orderedTotal);
+    document.getElementById('cartSubtotalLabel').textContent = ordered.length ? 'New items' : 'Subtotal';
     document.getElementById('cartSubtotal').textContent = formatPrice(subtotal);
-    document.getElementById('cartGrandTotal').textContent = formatPrice(subtotal);
+    document.getElementById('cartGrandTotal').textContent = formatPrice(subtotal + orderedTotal);
+    const confirmBtn = document.getElementById('confirmOrder');
+    if (confirmBtn && !confirmBtn.dataset.busy) confirmBtn.disabled = !cart.length;
 
     // Quantity buttons in the bag: change the line's qty, or remove it at zero.
     container.querySelectorAll('.cart-qty').forEach(btn => {
@@ -2952,7 +3116,7 @@
         line.qty += parseInt(btn.dataset.d, 10);
         if (line.qty < 1) cart.splice(idx, 1);
         updateCartBar();
-        if (!cart.length) closeSheet(cartSheet);
+        if (!cart.length && !orderedItems().length) closeSheet(cartSheet);
       });
     });
 
@@ -2962,7 +3126,7 @@
         cart.splice(idx, 1);
         updateCartBar();
         renderCartSheet();
-        if (!cart.length) closeSheet(cartSheet);
+        if (!cart.length && !orderedItems().length) closeSheet(cartSheet);
       });
     });
   }
@@ -2970,7 +3134,8 @@
   function resetConfirmOrderButton() {
     const btn = document.getElementById('confirmOrder');
     if (!btn) return;
-    btn.disabled = false;
+    delete btn.dataset.busy;
+    btn.disabled = !cart.length;
     btn.textContent = 'Confirm Order';
   }
 
@@ -2987,7 +3152,15 @@
 
     const btn = document.getElementById('confirmOrder');
     btn.disabled = true;
+    btn.dataset.busy = '1';
     const isAddingToExistingOrder = Boolean(activeOrderId);
+    btn.textContent = 'Checking location…';
+
+    // Orders can only be placed from inside the shop.
+    if (!(await requireAtShop())) {
+      resetConfirmOrderButton();
+      return;
+    }
     btn.textContent = isAddingToExistingOrder ? 'Updating bill…' : 'Placing order…';
 
     try {
@@ -3014,6 +3187,8 @@
           }),
           timeoutPromise
         ]);
+        order.items = (order.items || []).concat(sanitizeItems(itemsSnapshot));
+        persistPendingOrders();
       } else {
         const orderRef = database.ref('orders').push();
         orderId = orderRef.key;
@@ -3032,17 +3207,19 @@
           id: orderId,
           table: table,
           placedAt: Date.now(),
-          billNo: null
+          billNo: null,
+          items: sanitizeItems(itemsSnapshot)
         });
         persistPendingOrders();
       }
 
-      activeOrderId = orderId;
+      setActiveOrderId(orderId);
       watchForBillNumber(orderId, true);
 
       closeSheet(cartSheet);
-      cartBar.classList.add('hidden');
       cart = [];
+      updateCartBar();
+      renderConfirmItems();
 
       const currentOrder = pendingOrders.find(entry => entry.id === orderId);
       confirmBody.innerHTML = currentOrder && currentOrder.billNo !== null
@@ -3073,6 +3250,7 @@
     confirmTitle.textContent = 'Order placed!';
     confirmBillStatus.textContent = 'Waiting for confirmation from the counter...';
     confirmScreen.classList.add('hidden');
+    updateCartBar(); // keeps the earlier order visible in the cart as "Ordered"
     buildMenu();
     window.scrollTo(0, 0);
   });
@@ -3117,9 +3295,138 @@
       e => console.warn('Could not load shared menu, using built-in menu:', e));
   }).catch(() => {});
 
-  renderCartSheet();
+  /* ---------- Shop-only access (GPS geofence, no WiFi needed) ----------
+     Set lat/lng to the stall's position. To get them, open the site at the stall with
+     ?shopsetup=1 added to the URL; it shows the phone's coordinates to copy here.
+     While lat/lng are null the check is off and the site works anywhere. */
+  const SHOP_LOCATION = { lat: null, lng: null, radiusMeters: 150 };
+  const SHOP_OK_KEY = 'bfs_shop_ok';
+  const SHOP_OK_TTL_MS = 30 * 60 * 1000; // a passed check on page load is trusted for 30 minutes
+  const shopGate = document.getElementById('shopGate');
+  const shopGateSpinner = document.getElementById('shopGateSpinner');
+  const shopGateTitle = document.getElementById('shopGateTitle');
+  const shopGateBody = document.getElementById('shopGateBody');
+  const shopGateRetry = document.getElementById('shopGateRetry');
+  const shopCheckConfigured = () => Number.isFinite(SHOP_LOCATION.lat) && Number.isFinite(SHOP_LOCATION.lng);
+
+  function distanceMeters(lat1, lng1, lat2, lng2) {
+    const r = 6371000, rad = Math.PI / 180;
+    const dLat = (lat2 - lat1) * rad, dLng = (lng2 - lng1) * rad;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * rad) * Math.cos(lat2 * rad) * Math.sin(dLng / 2) ** 2;
+    return 2 * r * Math.asin(Math.sqrt(a));
+  }
+
+  function getPosition(maxAgeMs) {
+    return new Promise((resolve, reject) => {
+      if (!navigator.geolocation) return reject({ code: 'unsupported' });
+      navigator.geolocation.getCurrentPosition(resolve, reject,
+        { enableHighAccuracy: true, timeout: 20000, maximumAge: maxAgeMs });
+    });
+  }
+
+  async function verifyAtShop(maxAgeMs) {
+    try {
+      const pos = await getPosition(maxAgeMs);
+      const { latitude, longitude, accuracy } = pos.coords;
+      const d = distanceMeters(latitude, longitude, SHOP_LOCATION.lat, SHOP_LOCATION.lng);
+      // Allow for some GPS error indoors, but never more than 100 m of slack.
+      if (d <= SHOP_LOCATION.radiusMeters + Math.min(accuracy || 0, 100)) return { ok: true };
+      return { ok: false, reason: accuracy > 500 ? 'rough' : 'far' };
+    } catch (err) {
+      if (err && err.code === 1) return { ok: false, reason: 'denied' };
+      if (err && err.code === 'unsupported') return { ok: false, reason: 'unsupported' };
+      return { ok: false, reason: 'unavailable' };
+    }
+  }
+
+  const GATE_MESSAGES = {
+    far: ['Please order from the stall', 'This menu works only inside Best Fruits Stall. Scan the QR code on your table to order.'],
+    rough: ['Location is not clear', 'Turn on GPS / precise location on your phone, then try again.'],
+    denied: ['Location access needed', 'To make sure orders come from inside the stall, please allow location access for this site in your browser settings, then try again.'],
+    unsupported: ['Browser not supported', 'Your browser cannot share location. Please open this page in Chrome or Safari, or order at the counter.'],
+    unavailable: ['Could not find your location', 'Turn on location (GPS) on your phone and try again.']
+  };
+
+  function showGate(reason) {
+    shopGate.classList.remove('hidden');
+    const checking = reason === 'checking';
+    shopGateSpinner.classList.toggle('hidden', !checking);
+    shopGateRetry.classList.toggle('hidden', checking);
+    const [title, body] = checking
+      ? ['Checking your location…', 'This menu works only inside Best Fruits Stall. Please allow location access when asked.']
+      : GATE_MESSAGES[reason] || GATE_MESSAGES.unavailable;
+    shopGateTitle.textContent = title;
+    shopGateBody.textContent = body;
+  }
+
+  function markShopOk() {
+    try { sessionStorage.setItem(SHOP_OK_KEY, String(Date.now())); } catch (err) { /* ignore */ }
+  }
+
+  function recentlyVerified() {
+    try { return Date.now() - Number(sessionStorage.getItem(SHOP_OK_KEY) || 0) < SHOP_OK_TTL_MS; }
+    catch (err) { return false; }
+  }
+
+  async function runGateCheck(maxAgeMs) {
+    showGate('checking');
+    const result = await verifyAtShop(maxAgeMs);
+    if (result.ok) {
+      markShopOk();
+      shopGate.classList.add('hidden');
+      return true;
+    }
+    showGate(result.reason);
+    return false;
+  }
+
+  // Called just before an order is sent: a fresh-ish fix (up to 2 minutes old) must be at the shop.
+  async function requireAtShop() {
+    if (!shopCheckConfigured()) return true;
+    const result = await verifyAtShop(2 * 60 * 1000);
+    if (result.ok) { markShopOk(); return true; }
+    closeSheet(cartSheet);
+    showGate(result.reason);
+    return false;
+  }
+
+  function showShopSetup() {
+    shopGate.classList.remove('hidden');
+    shopGateRetry.classList.remove('hidden');
+    shopGateRetry.textContent = 'Read again';
+    shopGateSpinner.classList.remove('hidden');
+    shopGateTitle.textContent = 'Shop location setup';
+    shopGateBody.textContent = 'Reading GPS… stand inside the stall.';
+    getPosition(0).then(pos => {
+      const { latitude, longitude, accuracy } = pos.coords;
+      shopGateSpinner.classList.add('hidden');
+      shopGateBody.textContent = `lat: ${latitude.toFixed(6)}, lng: ${longitude.toFixed(6)} (accuracy ±${Math.round(accuracy)} m). ` +
+        'Put these into SHOP_LOCATION in public/index.html. Read again until accuracy is under 30 m.';
+    }).catch(() => {
+      shopGateSpinner.classList.add('hidden');
+      shopGateBody.textContent = 'Could not read location. Allow location access and turn on GPS.';
+    });
+  }
+
+  shopGateRetry.addEventListener('click', () => {
+    if (new URLSearchParams(window.location.search).has('shopsetup')) showShopSetup();
+    else runGateCheck(0);
+  });
+
+  function checkShopOnLoad() {
+    if (new URLSearchParams(window.location.search).has('shopsetup')) { showShopSetup(); return; }
+    if (!shopCheckConfigured()) {
+      console.warn('[shop-gate] SHOP_LOCATION is not set; the site is open from anywhere.');
+      return;
+    }
+    if (recentlyVerified()) return;
+    runGateCheck(60 * 1000);
+  }
+
+  updateCartBar();
   buildMenu();
   initGridScanBackground();
+  checkShopOnLoad();
 })();
 </script>
 <script src="/wall.js" defer></script>

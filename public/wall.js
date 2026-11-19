@@ -108,8 +108,9 @@
   new MutationObserver(syncBag).observe(cartCount, { childList: true, characterData: true, subtree: true });
   syncBag();
   bag.addEventListener('click', function () {
-    cartBar.click(); // existing handler renders and opens the cart (it ignores an empty cart)
-    if (!(parseInt(cartCount.textContent, 10) > 0)) showNote('Your cart is empty');
+    cartBar.click(); // existing handler renders and opens the cart (it ignores an empty cart with no earlier order)
+    var cartSheet = document.getElementById('cartSheet');
+    if (!(parseInt(cartCount.textContent, 10) > 0) && !(cartSheet && cartSheet.classList.contains('active'))) showNote('Your cart is empty');
   });
   function showNote(msg) {
     var t = document.getElementById('toast');

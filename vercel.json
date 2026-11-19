@@ -12,6 +12,14 @@
   ],
   "routes": [
     {
+      "src": "/(.*)",
+      "headers": {
+        "X-Robots-Tag": "noindex, nofollow, noarchive",
+        "Referrer-Policy": "no-referrer"
+      },
+      "continue": true
+    },
+    {
       "src": "/assets/(.*)",
       "dest": "/assets/$1"
     },
